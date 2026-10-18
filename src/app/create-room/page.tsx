@@ -7,6 +7,7 @@ import GameSelector from "./components/GameSelector";
 import MaxPlayersSelector from "./components/MaxPlayersSelector";
 import TimeLimitInput from "./components/TimeLimitInput";
 import RulesModal from "./components/RulesModal";
+import { Alert, Button, Card, Heading, PageShell, Text } from "@/components/ui";
 
 // API Response Types
 interface CreateRoomResponse {
@@ -181,129 +182,100 @@ export default function CreateRoomPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-green-900 via-emerald-900 to-teal-900 flex items-center justify-center p-4">
-      <div className="max-w-2xl w-full">
-        {/* Form Card */}
-        <div className="bg-white/10 backdrop-blur-lg rounded-3xl shadow-2xl p-6 md:p-12 border border-white/20">
-          {/* Header */}
-          <div className="text-center mb-6 md:mb-8">
-            <h1 className="text-3xl md:text-5xl font-bold text-white mb-2">
-              สร้างห้องเกม
-            </h1>
-            <p className="text-base md:text-lg text-green-200">
-              เริ่มต้นเกมใหม่และเชิญเพื่อนๆ มาเล่น
-            </p>
-          </div>
-
-          {/* API Error Message */}
-          {apiError && (
-            <div className="mb-6 bg-red-500/20 border border-red-500/50 rounded-xl p-4">
-              <p className="text-red-200 text-sm font-semibold">{apiError}</p>
-            </div>
-          )}
-
-          {/* Form */}
-          <form onSubmit={handleSubmit} className="space-y-4 md:space-y-6">
-            {/* Player Name Input */}
-            <PlayerNameInput
-              value={formData.playerName}
-              onChange={handlePlayerNameChange}
-              error={errors.playerName}
-              disabled={isLoading}
-            />
-
-            {/* Game Selection Dropdown */}
-            <GameSelector
-              games={games}
-              selectedGameId={formData.gameId}
-              onChange={handleGameChange}
-              onShowRules={() => setShowRulesModal(true)}
-              error={errors.gameId}
-              loading={gamesLoading}
-              disabled={isLoading}
-              gamesError={gamesError}
-            />
-
-            {/* Max Players Dropdown */}
-            <MaxPlayersSelector
-              value={formData.maxPlayers}
-              onChange={handleMaxPlayersChange}
-              selectedGame={selectedGame}
-              disabled={isLoading}
-            />
-
-            {/* Time Limit Input - Show only if game supports custom time */}
-            <TimeLimitInput
-              value={formData.timeLimit}
-              onChange={handleTimeLimitChange}
-              selectedGame={selectedGame}
-              disabled={isLoading}
-            />
-
-            {/* Buttons */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-              {/* Back Button - col-6 */}
-              <button
-                type="button"
-                onClick={() => (window.location.href = "/")}
-                className="w-full h-full bg-red-500/20 hover:bg-red-500/30 border-2 border-red-500/50 text-red-200 text-lg md:text-xl font-bold py-3 md:py-4 rounded-xl transition-all"
-              >
-                กลับหน้าหลัก
-              </button>
-
-              {/* Submit Button - col-6 */}
-              <button
-                type="submit"
-                disabled={
-                  !!errors.playerName ||
-                  !!errors.gameId ||
-                  !formData.playerName.trim() ||
-                  !formData.gameId ||
-                  isLoading
-                }
-                className="w-full bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 disabled:from-gray-500 disabled:to-gray-600 disabled:cursor-not-allowed text-white text-lg md:text-xl font-bold py-3 md:py-4 rounded-xl transition-all transform hover:scale-105 hover:shadow-2xl disabled:transform-none disabled:shadow-none flex items-center justify-center gap-3"
-              >
-                {isLoading ? (
-                  <>
-                    <svg
-                      className="animate-spin h-6 w-6 text-white"
-                      xmlns="http://www.w3.org/2000/svg"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                    >
-                      <circle
-                        className="opacity-25"
-                        cx="12"
-                        cy="12"
-                        r="10"
-                        stroke="currentColor"
-                        strokeWidth="4"
-                      ></circle>
-                      <path
-                        className="opacity-75"
-                        fill="currentColor"
-                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                      ></path>
-                    </svg>
-                    <span>กำลังสร้างห้อง...</span>
-                  </>
-                ) : (
-                  "สร้างห้อง"
-                )}
-              </button>
-            </div>
-          </form>
-
-          {/* Info Box */}
-          <div className="mt-6 md:mt-8 bg-green-500/20 border border-green-400/30 rounded-xl p-3 md:p-4">
-            <div className="text-xs md:text-sm text-green-100 text-center">
-              <span className="font-semibold">เคล็ดลับ: </span>
-              หลังจากสร้างห้องแล้ว คุณจะได้รับรหัสห้อง 6 หลักเพื่อแชร์ให้เพื่อนๆ
-              เข้าร่วม
-            </div>
-          </div>
+    <PageShell width="sm" center>
+      <Card padding="lg">
+        {/* Header */}
+        <div className="mb-6 text-center md:mb-8">
+          <Heading level="h1" className="mb-2">
+            สร้างห้องเกม
+          </Heading>
+          <Text tone="muted">เริ่มต้นเกมใหม่และเชิญเพื่อนๆ มาเล่น</Text>
         </div>
-      </div>
+
+        {/* API Error Message */}
+        {apiError && (
+          <Alert tone="danger" className="mb-6">
+            {apiError}
+          </Alert>
+        )}
+
+        {/* Form */}
+        <form onSubmit={handleSubmit} className="space-y-4 md:space-y-6">
+          {/* Player Name Input */}
+          <PlayerNameInput
+            value={formData.playerName}
+            onChange={handlePlayerNameChange}
+            error={errors.playerName}
+            disabled={isLoading}
+          />
+
+          {/* Game Selection Dropdown */}
+          <GameSelector
+            games={games}
+            selectedGameId={formData.gameId}
+            onChange={handleGameChange}
+            onShowRules={() => setShowRulesModal(true)}
+            error={errors.gameId}
+            loading={gamesLoading}
+            disabled={isLoading}
+            gamesError={gamesError}
+          />
+
+          {/* Max Players Dropdown */}
+          <MaxPlayersSelector
+            value={formData.maxPlayers}
+            onChange={handleMaxPlayersChange}
+            selectedGame={selectedGame}
+            disabled={isLoading}
+          />
+
+          {/* Time Limit Input - Show only if game supports custom time */}
+          <TimeLimitInput
+            value={formData.timeLimit}
+            onChange={handleTimeLimitChange}
+            selectedGame={selectedGame}
+            disabled={isLoading}
+          />
+
+          {/* Buttons */}
+          <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+            {/* Back Button (hard navigation, as before) */}
+            <Button
+              type="button"
+              variant="outline"
+              size="md"
+              fullWidth
+              onClick={() => (window.location.href = "/")}
+            >
+              กลับหน้าหลัก
+            </Button>
+
+            {/* Submit Button */}
+            <Button
+              type="submit"
+              size="md"
+              fullWidth
+              loading={isLoading}
+              disabled={
+                !!errors.playerName ||
+                !!errors.gameId ||
+                !formData.playerName.trim() ||
+                !formData.gameId ||
+                isLoading
+              }
+            >
+              {isLoading ? "กำลังสร้างห้อง..." : "สร้างห้อง"}
+            </Button>
+          </div>
+        </form>
+
+        {/* Info Box */}
+        <Alert tone="info" className="mt-6 md:mt-8">
+          <span className="font-semibold">เคล็ดลับ: </span>
+          หลังจากสร้างห้องแล้ว คุณจะได้รับรหัสห้อง 6 หลักเพื่อแชร์ให้เพื่อนๆ
+          เข้าร่วม
+        </Alert>
+      </Card>
 
       {/* Rules Modal */}
       <RulesModal
@@ -311,6 +283,6 @@ export default function CreateRoomPage() {
         onClose={() => setShowRulesModal(false)}
         gameName={selectedGame?.name || 'Ito'}
       />
-    </div>
+    </PageShell>
   );
 }

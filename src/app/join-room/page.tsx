@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
+import { Alert, Button, Card, Heading, Input, PageShell, Text } from "@/components/ui";
 
 // API Response Types
 interface JoinRoomResponse {
@@ -155,144 +155,76 @@ export default function JoinRoomPage() {
     !errors.playerName;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-900 via-cyan-900 to-teal-900 flex items-center justify-center p-4">
-      <div className="max-w-2xl w-full">
-        {/* Form Card */}
-        <div className="bg-white/10 backdrop-blur-lg rounded-3xl shadow-2xl p-6 md:p-12 border border-white/20">
-          {/* Header */}
-          <div className="text-center mb-6 md:mb-8">
-            <h1 className="text-3xl md:text-5xl font-bold text-white mb-2">
-              เข้าร่วมห้อง
-            </h1>
-            <p className="text-base md:text-lg text-blue-200">ใส่รหัสห้องเพื่อเข้าร่วมเกม</p>
-          </div>
-
-          {/* API Error Message */}
-          {apiError && (
-            <div className="mb-6 bg-red-500/20 border border-red-500/50 rounded-xl p-4">
-              <p className="text-red-200 text-sm font-semibold">{apiError}</p>
-            </div>
-          )}
-
-          {/* Form */}
-          <form onSubmit={handleSubmit} className="space-y-4 md:space-y-6">
-            {/* Room Code Input */}
-            <div>
-              <label
-                htmlFor="roomCode"
-                className="block text-white text-base md:text-lg font-semibold mb-2 md:mb-3 text-center"
-              >
-                รหัสห้อง <span className="text-red-400">*</span>
-              </label>
-              <input
-                type="text"
-                id="roomCode"
-                value={formatRoomCode(formData.roomCode)}
-                onChange={handleRoomCodeChange}
-                placeholder="000-000"
-                inputMode="numeric"
-                disabled={isLoading}
-                className={`w-full px-4 md:px-6 py-4 md:py-6 rounded-2xl bg-white/20 border-2 ${
-                  errors.roomCode ? "border-red-500" : "border-white/30"
-                } text-white text-center text-3xl md:text-4xl font-bold placeholder-white/30 focus:outline-none focus:border-blue-400 transition-colors tracking-widest disabled:opacity-50 disabled:cursor-not-allowed`}
-              />
-              <div className="mt-2 md:mt-3 text-center">
-                {errors.roomCode && (
-                  <p className="text-red-400 text-xs md:text-sm">{errors.roomCode}</p>
-                )}
-              </div>
-            </div>
-
-            {/* Player Name Input */}
-            <div>
-              <label
-                htmlFor="playerName"
-                className="block text-white text-base md:text-lg font-semibold mb-2"
-              >
-                ชื่อผู้เล่น <span className="text-red-400">*</span>
-              </label>
-              <input
-                type="text"
-                id="playerName"
-                value={formData.playerName}
-                onChange={handlePlayerNameChange}
-                placeholder="ใส่ชื่อของคุณ"
-                maxLength={20}
-                disabled={isLoading}
-                className={`w-full px-4 py-3 rounded-xl bg-white/20 border-2 ${
-                  errors.playerName ? "border-red-500" : "border-white/30"
-                } text-white placeholder-white/50 focus:outline-none focus:border-blue-400 transition-colors disabled:opacity-50 disabled:cursor-not-allowed`}
-              />
-              <div className="flex justify-between mt-2">
-                {errors.playerName && (
-                  <p className="text-red-400 text-xs md:text-sm">{errors.playerName}</p>
-                )}
-                <p className="text-white/60 text-xs md:text-sm ml-auto">
-                  {formData.playerName.length}/20
-                </p>
-              </div>
-            </div>
-
-            {/* Buttons */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-
-               {/* Back Button - col-6 */}
-               <Link href="/" className="block w-full">
-                <button
-                  type="button"
-                  className="w-full h-full bg-red-500/20 hover:bg-red-500/30 border-2 border-red-500/50 text-red-200 text-lg md:text-xl font-bold py-3 md:py-4 rounded-xl transition-all"
-                >
-                  กลับหน้าหลัก
-                </button>
-              </Link>
-
-              {/* Submit Button - col-6 */}
-              <button
-                type="submit"
-                disabled={!isFormValid || isLoading}
-                className="w-full bg-gradient-to-r from-blue-500 to-cyan-600 hover:from-blue-600 hover:to-cyan-700 disabled:from-gray-500 disabled:to-gray-600 disabled:cursor-not-allowed text-white text-lg md:text-xl font-bold py-3 md:py-4 rounded-xl transition-all transform hover:scale-105 hover:shadow-2xl disabled:transform-none disabled:shadow-none flex items-center justify-center gap-3"
-              >
-                {isLoading ? (
-                  <>
-                    <svg
-                      className="animate-spin h-6 w-6 text-white"
-                      xmlns="http://www.w3.org/2000/svg"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                    >
-                      <circle
-                        className="opacity-25"
-                        cx="12"
-                        cy="12"
-                        r="10"
-                        stroke="currentColor"
-                        strokeWidth="4"
-                      ></circle>
-                      <path
-                        className="opacity-75"
-                        fill="currentColor"
-                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                      ></path>
-                    </svg>
-                    <span>กำลังเข้าห้อง...</span>
-                  </>
-                ) : (
-                  "เข้าห้อง"
-                )}
-              </button>
-     
-            </div>
-          </form>
-
-          {/* Info Box */}
-          <div className="mt-6 md:mt-8 bg-blue-500/20 border border-blue-400/30 rounded-xl p-3 md:p-4">
-            <div className="text-xs md:text-sm text-blue-100 text-center">
-              <span className="font-semibold mb-1">คำแนะนำ:</span>{" "}
-              รหัสห้องเป็นตัวเลข 6 หลักที่ได้รับจากผู้สร้างห้อง
-            </div>
-          </div>
+    <PageShell backHref="/" backLabel="กลับหน้าหลัก" width="sm" center>
+      <Card padding="lg">
+        {/* Header */}
+        <div className="mb-6 text-center md:mb-8">
+          <Heading level="h1" className="mb-2">
+            เข้าร่วมห้อง
+          </Heading>
+          <Text tone="muted">ใส่รหัสห้องเพื่อเข้าร่วมเกม</Text>
         </div>
-      </div>
-    </div>
+
+        {/* API Error Message */}
+        {apiError && (
+          <Alert tone="danger" className="mb-6">
+            {apiError}
+          </Alert>
+        )}
+
+        {/* Form */}
+        <form onSubmit={handleSubmit} className="space-y-4 md:space-y-6">
+          {/* Room Code Input */}
+          <Input
+            type="text"
+            id="roomCode"
+            label="รหัสห้อง *"
+            value={formatRoomCode(formData.roomCode)}
+            onChange={handleRoomCodeChange}
+            placeholder="000-000"
+            inputMode="numeric"
+            disabled={isLoading}
+            error={errors.roomCode || undefined}
+            className="h-auto py-4 text-center font-number text-h2 tracking-[0.3em]"
+          />
+
+          {/* Player Name Input */}
+          <div>
+            <Input
+              type="text"
+              id="playerName"
+              label="ชื่อผู้เล่น *"
+              value={formData.playerName}
+              onChange={handlePlayerNameChange}
+              placeholder="ใส่ชื่อของคุณ"
+              maxLength={20}
+              disabled={isLoading}
+              error={errors.playerName || undefined}
+            />
+            <Text variant="caption" tone="subtle" className="mt-1.5 text-right">
+              {formData.playerName.length}/20
+            </Text>
+          </div>
+
+          {/* Submit Button */}
+          <Button
+            type="submit"
+            variant="secondary"
+            size="lg"
+            fullWidth
+            loading={isLoading}
+            disabled={!isFormValid || isLoading}
+          >
+            {isLoading ? "กำลังเข้าห้อง..." : "เข้าห้อง"}
+          </Button>
+        </form>
+
+        {/* Info Box */}
+        <Alert tone="info" className="mt-6 md:mt-8">
+          <span className="font-semibold">คำแนะนำ:</span>{" "}
+          รหัสห้องเป็นตัวเลข 6 หลักที่ได้รับจากผู้สร้างห้อง
+        </Alert>
+      </Card>
+    </PageShell>
   );
 }

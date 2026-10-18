@@ -5,6 +5,9 @@
 
 "use client";
 
+import { LuCircleCheck, LuHourglass } from "react-icons/lu";
+import { Badge, Card, Heading, PlayerChip, Text } from "@/components/ui";
+
 interface PlayerStatus {
   playerName: string;
   submittedCount: number;
@@ -25,46 +28,56 @@ export default function PlayerStatusTracker({
   totalPlayers,
 }: PlayerStatusTrackerProps) {
   return (
-    <div className="bg-white/5 rounded-xl md:rounded-2xl p-3 md:p-4 mb-4 md:mb-6 border border-white/10">
-      <h4 className="text-white font-bold mb-2 md:mb-3 text-center text-sm md:text-base">{title}</h4>
-      <div className="text-center text-white/70 mb-2 md:mb-3 text-xs md:text-sm">
+    <Card variant="muted" padding="sm" className="mb-4 md:mb-6">
+      <Heading level="h3" as="h4" className="mb-2 text-center md:mb-3">
+        {title}
+      </Heading>
+      <Text variant="small" tone="muted" className="mb-2 text-center md:mb-3">
         {playersCompleted.length} / {totalPlayers} คนส่งครบแล้ว
-      </div>
-      <div className="grid grid-cols-2 gap-2 md:gap-3">
+      </Text>
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
         {/* ส่งครบแล้ว */}
         <div>
-          <div className="text-green-400 text-xs md:text-sm mb-1 md:mb-2 text-center">
-            ✅ ส่งครบแล้ว
+          <div className="mb-1 flex justify-center md:mb-2">
+            <Badge tone="success"><LuCircleCheck className="h-4 w-4" aria-hidden /> ส่งครบแล้ว</Badge>
           </div>
-          <div className="space-y-1">
+          <div className="grid grid-cols-1 gap-2">
             {playersCompleted.map((p, i) => (
-              <div
+              <PlayerChip
                 key={i}
-                className="text-white/80 text-xs md:text-sm text-center bg-green-500/20 rounded py-1"
-              >
-                {p.playerName} ({p.submittedCount}/{p.totalExpected})
-              </div>
+                name={p.playerName}
+                colorIndex={i}
+                status={
+                  <Badge tone="success">
+                    {p.submittedCount}/{p.totalExpected}
+                  </Badge>
+                }
+              />
             ))}
           </div>
         </div>
 
         {/* ยังส่งไม่ครบ */}
         <div>
-          <div className="text-orange-400 text-xs md:text-sm mb-1 md:mb-2 text-center">
-            ⏳ ยังส่งไม่ครบ
+          <div className="mb-1 flex justify-center md:mb-2">
+            <Badge tone="warning"><LuHourglass className="h-4 w-4" aria-hidden /> ยังส่งไม่ครบ</Badge>
           </div>
-          <div className="space-y-1">
-            {playersNotCompleted.map(([id, p]) => (
-              <div
+          <div className="grid grid-cols-1 gap-2">
+            {playersNotCompleted.map(([id, p], i) => (
+              <PlayerChip
                 key={id}
-                className="text-white/50 text-xs md:text-sm text-center bg-orange-500/20 rounded py-1"
-              >
-                {p.playerName} ({p.submittedCount}/{p.totalExpected})
-              </div>
+                name={p.playerName}
+                colorIndex={playersCompleted.length + i}
+                status={
+                  <Badge tone="neutral">
+                    {p.submittedCount}/{p.totalExpected}
+                  </Badge>
+                }
+              />
             ))}
           </div>
         </div>
       </div>
-    </div>
+    </Card>
   );
 }

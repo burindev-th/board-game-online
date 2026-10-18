@@ -5,6 +5,9 @@
 
 "use client";
 
+import { LuCheck, LuHeartCrack, LuHouse, LuRotateCcw, LuTrophy, LuX } from "react-icons/lu";
+import { Badge, Button, Card, Heading, Hearts, Text } from "@/components/ui";
+
 type ItoPlayerAnswer = {
   playerId: string;
   playerName: string;
@@ -31,75 +34,58 @@ export default function FinishedPhase({
   const finalHearts = gameState.status === "lost" ? 0 : gameState.hearts;
 
   return (
-    <div className="bg-white/10 backdrop-blur-lg rounded-2xl md:rounded-3xl shadow-2xl p-4 md:p-12 border border-white/20 text-center">
+    <Card padding="md" className="text-center">
       {gameState.status === "won" ? (
         <>
-          <div className="text-6xl md:text-8xl mb-4 md:mb-6 animate-bounce">🎉</div>
-          <h3 className="text-2xl md:text-4xl font-bold text-green-400 mb-3 md:mb-4">ชนะแล้ว!</h3>
-          <p className="text-white/90 text-base md:text-xl mb-4 md:mb-6">
+          <div className="mx-auto mb-4 inline-flex h-20 w-20 items-center justify-center rounded-lg border-2 border-ink bg-primary text-primary-on shadow-brutal md:mb-6"><LuTrophy className="h-10 w-10" aria-hidden /></div>
+          <Heading as="h3" level="h1" className="mb-3 text-center md:mb-4">
+            ชนะแล้ว!
+          </Heading>
+          <Text tone="muted" className="mb-4 text-center md:mb-6">
             คุณและเพื่อนๆ ผ่านเกมได้สำเร็จ
-          </p>
+          </Text>
         </>
       ) : (
         <>
-          <div className="text-6xl md:text-8xl mb-4 md:mb-6">💔</div>
-          <h3 className="text-2xl md:text-4xl font-bold text-red-400 mb-3 md:mb-4">แพ้แล้ว</h3>
-          <p className="text-white/90 text-base md:text-xl mb-4 md:mb-6">
+          <div className="mx-auto mb-4 inline-flex h-20 w-20 items-center justify-center rounded-lg border-2 border-ink bg-danger text-on-status shadow-brutal md:mb-6"><LuHeartCrack className="h-10 w-10" aria-hidden /></div>
+          <Heading as="h3" level="h1" className="mb-3 text-center md:mb-4">
+            แพ้แล้ว
+          </Heading>
+          <Text tone="muted" className="mb-4 text-center md:mb-6">
             หัวใจหมดแล้ว ลองใหม่อีกครั้งนะ!
-          </p>
+          </Text>
         </>
       )}
 
-      {/* Summary Box */}
-      <div className="bg-white/5 rounded-xl md:rounded-2xl p-4 md:p-8 mb-6 md:mb-8 max-w-md mx-auto">
-        <h4 className="text-xl md:text-2xl font-bold text-white mb-4 md:mb-6">สรุปผล</h4>
-
-        {/* Hearts */}
-        <div className="mb-4 md:mb-6">
-          <div className="text-white/70 mb-2 text-sm md:text-base">หัวใจคงเหลือ:</div>
-          <div className="flex justify-center gap-1.5 md:gap-2 mb-2">
-            {Array.from({ length: 3 }).map((_, i) => (
-              <div
-                key={i}
-                className={`text-4xl md:text-5xl ${
-                  i < finalHearts
-                    ? "text-red-500"
-                    : "text-gray-600 opacity-30"
-                }`}
-              >
-                ❤️
-              </div>
-            ))}
-          </div>
-          <div className="text-2xl md:text-3xl font-bold text-yellow-300">
-            {finalHearts} / 3
-          </div>
+      {/* สรุปผลแบบย่อ */}
+      <div className="mx-auto mb-4 grid max-w-md grid-cols-2 gap-2 md:mb-6">
+        <div className="flex flex-col items-center gap-1 rounded-md border-2 border-ink bg-surface-muted p-3">
+          <Text variant="caption" tone="muted" as="span">หัวใจคงเหลือ</Text>
+          <Hearts total={3} remaining={finalHearts} size="md" />
         </div>
-
-        {/* Rounds */}
-        <div className="mb-4 md:mb-6">
-          <div className="text-white/70 mb-2 text-sm md:text-base">เลขที่เปิดแล้ว:</div>
-          <div className="text-xl md:text-2xl font-bold text-white">
-            {gameState.revealedNumbers.length} / {gameState.totalRounds}
-          </div>
-        </div>
-
-        {/* Result */}
-        <div className="pt-4 md:pt-6 border-t border-white/20">
-          <div className="text-2xl md:text-3xl font-bold">
-            {gameState.status === "won" ? (
-              <span className="text-green-400">✅ ชนะ</span>
-            ) : (
-              <span className="text-red-400">❌ แพ้</span>
-            )}
-          </div>
+        <div className="flex flex-col items-center gap-1 rounded-md border-2 border-ink bg-surface-muted p-3">
+          <Text variant="caption" tone="muted" as="span">เลขที่เปิดได้</Text>
+          <span className="font-number text-h2 font-bold tabular-nums">
+            {gameState.revealedNumbers.length}/{gameState.totalRounds}
+          </span>
         </div>
       </div>
 
+      <div className="mx-auto mb-6 flex max-w-md flex-col gap-2 sm:flex-row md:mb-8">
+        <Button href="/create-room" size="lg" fullWidth icon={<LuRotateCcw aria-hidden />}>
+          เล่นอีกครั้ง
+        </Button>
+        <Button href="/" variant="outline" size="lg" fullWidth icon={<LuHouse aria-hidden />}>
+          กลับหน้าหลัก
+        </Button>
+      </div>
+
       {/* Show all numbers (revealed + unrevealed) */}
-      <div className="mt-6 md:mt-8 max-w-6xl mx-auto">
-        <h4 className="text-base md:text-xl font-bold text-white mb-3 md:mb-4 text-center">ตัวเลขทั้งหมด:</h4>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-2 md:gap-3">
+      <div className="mx-auto max-w-6xl">
+        <Heading level="h3" as="h4" className="mb-3 text-center md:mb-4">
+          ตัวเลขทั้งหมด:
+        </Heading>
+        <div className="grid grid-cols-1 gap-2 md:grid-cols-2 md:gap-3">
           {/* เลขที่เปิดแล้ว */}
           {playerAnswers
             .filter((a) => a.isRevealed)
@@ -107,26 +93,26 @@ export default function FinishedPhase({
             .map((ans, i) => (
               <div
                 key={i}
-                className="bg-white/10 rounded-lg md:rounded-xl p-2.5 md:p-4 flex items-center justify-between gap-2"
+                className="flex items-center justify-between gap-2 rounded-md border-2 border-ink bg-surface p-2.5 text-fg md:p-3"
               >
-                <div className="flex items-center gap-2 md:gap-4 min-w-0">
-                  <div className="text-xl md:text-3xl font-bold text-yellow-300 min-w-[50px] md:min-w-[60px] flex-shrink-0">
-                    [{ans.number}]
-                  </div>
-                  <div className="text-left min-w-0">
-                    <div className="text-white text-sm md:text-lg truncate">
+                <div className="flex min-w-0 items-center gap-2 md:gap-3">
+                  <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-md border-2 border-ink bg-warning font-number text-h3 font-bold tabular-nums text-on-status">
+                    {ans.number}
+                  </span>
+                  <div className="min-w-0 text-left">
+                    <div className="truncate text-body">
                       &quot;{ans.answer}&quot;
                     </div>
-                    <div className="text-white/50 text-xs md:text-sm">
+                    <Text variant="caption" tone="muted" as="div">
                       {ans.playerName}
-                    </div>
+                    </Text>
                   </div>
                 </div>
                 {ans.isCorrect === true && (
-                  <div className="text-green-400 text-lg md:text-2xl flex-shrink-0">✓</div>
+                  <Badge tone="success" className="shrink-0"><LuCheck className="h-4 w-4" aria-label="ถูก" /></Badge>
                 )}
                 {ans.isCorrect === false && (
-                  <div className="text-red-400 text-lg md:text-2xl flex-shrink-0">✗</div>
+                  <Badge tone="danger" className="shrink-0"><LuX className="h-4 w-4" aria-label="ผิด" /></Badge>
                 )}
               </div>
             ))}
@@ -138,34 +124,25 @@ export default function FinishedPhase({
             .map((ans, i) => (
               <div
                 key={`unrevealed-${i}`}
-                className="bg-white/5 rounded-lg md:rounded-xl p-2.5 md:p-4 flex items-center justify-between border border-white/10 gap-2"
+                className="flex items-center justify-between gap-2 rounded-md border-2 border-ink bg-surface-muted p-2.5 text-fg-muted md:p-3"
               >
-                <div className="flex items-center gap-2 md:gap-4 min-w-0">
-                  <div className="text-xl md:text-3xl font-bold text-gray-400 min-w-[50px] md:min-w-[60px] flex-shrink-0">
-                    [{ans.number}]
-                  </div>
-                  <div className="text-left min-w-0">
-                    <div className="text-gray-400 text-sm md:text-lg truncate">
+                <div className="flex min-w-0 items-center gap-2 md:gap-3">
+                  <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-md border-2 border-ink bg-surface font-number text-h3 font-bold tabular-nums">
+                    {ans.number}
+                  </span>
+                  <div className="min-w-0 text-left">
+                    <div className="truncate text-body">
                       &quot;{ans.answer}&quot;
                     </div>
-                    <div className="text-gray-500 text-xs md:text-sm">{ans.playerName}</div>
+                    <div className="text-caption">{ans.playerName}</div>
                   </div>
                 </div>
-                <div className="text-gray-500 text-xs md:text-sm flex-shrink-0">ไม่ได้เปิด</div>
+                <Badge tone="neutral" className="shrink-0">ไม่ได้เปิด</Badge>
               </div>
             ))}
         </div>
       </div>
 
-      {/* ปุ่มกลับหน้าหลัก */}
-      <div className="mt-6 md:mt-8 flex justify-center gap-4">
-        <button
-          onClick={() => (window.location.href = "/")}
-          className="bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white text-base md:text-lg font-bold px-6 md:px-8 py-3 md:py-4 rounded-xl transition-all transform hover:scale-105"
-        >
-          กลับหน้าหลัก
-        </button>
-      </div>
-    </div>
+    </Card>
   );
 }

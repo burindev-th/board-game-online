@@ -1,7 +1,9 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { FaTimes, FaBug, FaLightbulb, FaChevronLeft, FaExclamationTriangle, FaCheckCircle } from 'react-icons/fa';
+import { FaBug, FaLightbulb, FaChevronLeft, FaCheckCircle } from 'react-icons/fa';
+import { Alert, Badge, Button, buttonClasses, Heading, Input, Modal, Select, Spinner, Text, Textarea } from '@/components/ui';
+import { cn } from '@/lib/utils/cn';
 import { useGames } from '@/lib/hooks/useGames';
 import { submitFeedback, submitItoQuestion, checkDuplicateItoQuestion } from '@/lib/firebase/feedback';
 import type { FeedbackType } from '@/types/feedback';
@@ -139,224 +141,191 @@ export default function FeedbackModal({ isOpen, onClose }: FeedbackModalProps) {
     }
   };
 
-  if (!isOpen) return null;
+  const isFormStep = step === 'fill-form' && !success;
+
+  const title =
+    step === 'select-type' ? 'ช่วยเราปรับปรุง' : feedbackType === 'issue' ? 'แจ้งปัญหา' : 'ช่วยปรับปรุงเกม';
+
+  const footer = isFormStep ? (
+    <>
+      <Button variant="outline" icon={<FaChevronLeft />} onClick={handleBack}>
+        กลับ
+      </Button>
+      <Button
+        type="submit"
+        form="feedback-form"
+        loading={submitting}
+        disabled={
+          (feedbackType === 'improvement' && selectedGameId !== 'BWLxJkh45e6RiALRBmcl') ||
+          (feedbackType === 'improvement' && isDuplicate) ||
+          isChecking
+        }
+      >
+        {submitting ? 'กำลังส่ง...' : isChecking ? 'กำลังตรวจสอบ...' : 'ส่งข้อมูล'}
+      </Button>
+    </>
+  ) : undefined;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
-      <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-        {/* Header */}
-        <div className="sticky top-0 bg-white border-b border-gray-200 p-6 flex items-center justify-between rounded-t-2xl">
-          <div className="flex items-center gap-3">
-            {step === 'fill-form' && (
-              <button
-                onClick={handleBack}
-                className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
-              >
-                <FaChevronLeft className="text-gray-600" />
-              </button>
-            )}
-            <h2 className="text-2xl font-bold text-gray-900">
-              {step === 'select-type' ? 'ช่วยเราปรับปรุง' : feedbackType === 'issue' ? 'แจ้งปัญหา' : 'ช่วยปรับปรุงเกม'}
-            </h2>
+    <Modal
+      open={isOpen}
+      onClose={handleClose}
+      title={title}
+      size={isFormStep ? "lg" : "sm"}
+      footer={footer}
+      closeOnBackdrop={!isFormStep}
+      closeOnEsc={!isFormStep}
+    >
+      {success ? (
+        <div className="py-8 text-center">
+          <div className="mx-auto mb-4 flex h-20 w-20 items-center justify-center rounded-full border-2 border-ink bg-success text-on-status">
+            <svg className="h-10 w-10" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+            </svg>
           </div>
+          <Heading level="h2" as="h3" className="mb-2">ส่งข้อมูลเรียบร้อย!</Heading>
+          <Text tone="muted">ขอบคุณที่ช่วยเราปรับปรุงระบบ</Text>
+        </div>
+      ) : step === 'select-type' ? (
+        // Step 1: Select Type
+        <div className="space-y-3">
           <button
-            onClick={handleClose}
-            className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+            type="button"
+            onClick={() => handleSelectType('issue')}
+            className={cn(
+              buttonClasses({ variant: 'danger', fullWidth: true }),
+              'h-auto justify-start gap-3 px-4 py-3 text-left',
+            )}
           >
-            <FaTimes className="text-gray-600 text-xl" />
+            <FaBug className="h-6 w-6 shrink-0" aria-hidden="true" />
+            <span className="flex flex-col">
+              <span>แจ้งปัญหา</span>
+              <span className="whitespace-normal text-caption font-normal">พบบั๊กหรือข้อผิดพลาดในระบบ</span>
+            </span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => handleSelectType('improvement')}
+            className={cn(
+              buttonClasses({ variant: 'secondary', fullWidth: true }),
+              'h-auto justify-start gap-3 px-4 py-3 text-left',
+            )}
+          >
+            <FaLightbulb className="h-6 w-6 shrink-0" aria-hidden="true" />
+            <span className="flex flex-col">
+              <span>ช่วยปรับปรุงเกม</span>
+              <span className="whitespace-normal text-caption font-normal">เพิ่มโจทย์หรือเนื้อหาในเกม</span>
+            </span>
           </button>
         </div>
-
-        {/* Body */}
-        <div className="p-6">
-          {success ? (
-            <div className="text-center py-12">
-              <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <svg className="w-10 h-10 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                </svg>
-              </div>
-              <h3 className="text-2xl font-bold text-gray-900 mb-2">ส่งข้อมูลเรียบร้อย!</h3>
-              <p className="text-gray-600">ขอบคุณที่ช่วยเราปรับปรุงระบบ</p>
-            </div>
-          ) : step === 'select-type' ? (
-            // Step 1: Select Type
-            <div className="space-y-4">
-              <p className="text-gray-600 mb-6">เลือกประเภทที่คุณต้องการ</p>
-
-              <button
-                onClick={() => handleSelectType('issue')}
-                className="w-full bg-gradient-to-br from-red-500 to-orange-600 hover:from-red-600 hover:to-orange-700 text-white p-6 rounded-xl transition-all transform hover:scale-105 shadow-lg hover:shadow-xl"
-              >
-                <FaBug className="text-4xl mx-auto mb-3" />
-                <h3 className="text-xl font-bold mb-2">แจ้งปัญหา</h3>
-                <p className="text-sm text-white/90">พบบั๊กหรือข้อผิดพลาดในระบบ</p>
-              </button>
-
-              <button
-                onClick={() => handleSelectType('improvement')}
-                className="w-full bg-gradient-to-br from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white p-6 rounded-xl transition-all transform hover:scale-105 shadow-lg hover:shadow-xl"
-              >
-                <FaLightbulb className="text-4xl mx-auto mb-3" />
-                <h3 className="text-xl font-bold mb-2">ช่วยปรับปรุงเกม</h3>
-                <p className="text-sm text-white/90">เพิ่มโจทย์หรือเนื้อหาในเกม</p>
-              </button>
+      ) : (
+        // Step 2: Fill Form
+        <form id="feedback-form" onSubmit={handleSubmit} className="space-y-5">
+          {/* Select Game */}
+          {gamesLoading ? (
+            <div>
+              <Text variant="small" className="mb-2 font-semibold">เลือกเกม *</Text>
+              <Text tone="muted">กำลังโหลดรายการเกม...</Text>
             </div>
           ) : (
-            // Step 2: Fill Form
-            <form onSubmit={handleSubmit} className="space-y-5">
-              {/* Select Game */}
-              <div>
-                <label className="block text-gray-700 font-semibold mb-2">
-                  เลือกเกม <span className="text-red-500">*</span>
-                </label>
-                {gamesLoading ? (
-                  <div className="text-gray-500">กำลังโหลดรายการเกม...</div>
-                ) : (
-                  <select
-                    value={selectedGameId}
-                    onChange={(e) => setSelectedGameId(e.target.value)}
+            <Select
+              label="เลือกเกม *"
+              value={selectedGameId}
+              onChange={(e) => setSelectedGameId(e.target.value)}
+              required
+            >
+              <option value="">-- เลือกเกม --</option>
+              {games.map((game) => (
+                <option key={game.id} value={game.id}>
+                  {game.name}
+                </option>
+              ))}
+            </Select>
+          )}
+
+          {feedbackType === 'issue' ? (
+            // Issue Report Form
+            <>
+              <Input
+                type="text"
+                label="หัวข้อ *"
+                value={subject}
+                onChange={(e) => setSubject(e.target.value)}
+                required
+                placeholder="เช่น ปุ่มกดไม่ได้, หน้าจอค้าง"
+              />
+
+              <Textarea
+                label="รายละเอียด *"
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                required
+                rows={5}
+                placeholder="อธิบายปัญหาที่พบให้ละเอียด..."
+              />
+            </>
+          ) : (
+            // Improvement Form (Ito Question)
+            <>
+              {/* Show form fields based on selected game */}
+              {selectedGameId === 'BWLxJkh45e6RiALRBmcl' ? (
+                // Ito game form
+                <>
+                  <Input
+                    type="text"
+                    label="ชื่อของคุณ *"
+                    value={userName}
+                    onChange={(e) => setUserName(e.target.value)}
                     required
-                    className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  >
-                    <option value="">-- เลือกเกม --</option>
-                    {games.map((game) => (
-                      <option key={game.id} value={game.id}>
-                        {game.name}
-                      </option>
-                    ))}
-                  </select>
-                )}
-              </div>
-
-              {feedbackType === 'issue' ? (
-                // Issue Report Form
-                <>
-                  <div>
-                    <label className="block text-gray-700 font-semibold mb-2">
-                      หัวข้อ <span className="text-red-500">*</span>
-                    </label>
-                    <input
-                      type="text"
-                      value={subject}
-                      onChange={(e) => setSubject(e.target.value)}
-                      required
-                      placeholder="เช่น ปุ่มกดไม่ได้, หน้าจอค้าง"
-                      className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    />
-                  </div>
+                    placeholder="ชื่อหรือชื่อเล่น"
+                  />
 
                   <div>
-                    <label className="block text-gray-700 font-semibold mb-2">
-                      รายละเอียด <span className="text-red-500">*</span>
-                    </label>
-                    <textarea
-                      value={description}
-                      onChange={(e) => setDescription(e.target.value)}
+                    <Textarea
+                      label="คำถามโจทย์ *"
+                      value={questionsTH}
+                      onChange={(e) => setQuestionsTH(e.target.value)}
                       required
-                      rows={5}
-                      placeholder="อธิบายปัญหาที่พบให้ละเอียด..."
-                      className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+                      rows={3}
+                      placeholder="เช่น ความสูงของต้นไม้ที่คุณชอบ, ความร้อนของกาแฟที่เหมาะสม"
+                      aria-invalid={isDuplicate || undefined}
+                      className={isDuplicate ? 'border-danger' : undefined}
                     />
-                  </div>
-                </>
-              ) : (
-                // Improvement Form (Ito Question)
-                <>
-                  {/* Show form fields based on selected game */}
-                  {selectedGameId === 'BWLxJkh45e6RiALRBmcl' ? (
-                    // Ito game form
-                    <>
-                      <div>
-                        <label className="block text-gray-700 font-semibold mb-2">
-                          ชื่อของคุณ <span className="text-red-500">*</span>
-                        </label>
-                        <input
-                          type="text"
-                          value={userName}
-                          onChange={(e) => setUserName(e.target.value)}
-                          required
-                          placeholder="ชื่อหรือชื่อเล่น"
-                          className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                        />
-                      </div>
 
-                      <div>
-                        <label className="block text-gray-700 font-semibold mb-2">
-                          คำถามโจทย์ <span className="text-red-500">*</span>
-                        </label>
-                        <textarea
-                          value={questionsTH}
-                          onChange={(e) => setQuestionsTH(e.target.value)}
-                          required
-                          rows={3}
-                          placeholder="เช่น ความสูงของต้นไม้ที่คุณชอบ, ความร้อนของกาแฟที่เหมาะสม"
-                          className={`w-full px-4 py-3 rounded-lg border ${
-                            isDuplicate ? 'border-red-500' : 'border-gray-300'
-                          } focus:outline-none focus:ring-2 ${
-                            isDuplicate ? 'focus:ring-red-500' : 'focus:ring-blue-500'
-                          } focus:border-transparent resize-none`}
-                        />
-
-                        {/* Duplicate Check Result */}
-                        {questionsTH.trim().length > 5 && (
-                          <div className="mt-2">
-                            {isChecking ? (
-                              <p className="text-sm text-gray-500 flex items-center gap-2">
-                                <span className="inline-block w-4 h-4 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"></span>
-                                กำลังตรวจสอบ...
-                              </p>
-                            ) : isDuplicate ? (
-                              <div className="bg-red-50 border border-red-200 rounded-lg p-3">
-                                <p className="text-sm text-red-700 font-semibold flex items-center gap-2 mb-2">
-                                  <FaExclamationTriangle />
-                                  พบคำถามที่คล้ายกัน {similarity}%
-                                </p>
-                                <p className="text-sm text-red-600 pl-5">
-                                  "{similarQuestion}"
-                                </p>
-                                <p className="text-xs text-red-500 pl-5 mt-1">
-                                  กรุณาเปลี่ยนคำถามให้แตกต่างมากขึ้น
-                                </p>
-                              </div>
-                            ) : (
-                              <p className="text-sm text-green-600 flex items-center gap-2">
-                                <FaCheckCircle />
-                                คำถามนี้ยังไม่มีในระบบ
-                              </p>
-                            )}
-                          </div>
+                    {/* Duplicate Check Result */}
+                    {questionsTH.trim().length > 5 && (
+                      <div className="mt-2">
+                        {isChecking ? (
+                          <Text variant="small" tone="muted" as="p" className="flex items-center gap-2">
+                            <Spinner size="sm" />
+                            กำลังตรวจสอบ...
+                          </Text>
+                        ) : isDuplicate ? (
+                          <Alert tone="danger" title={`พบคำถามที่คล้ายกัน ${similarity}%`}>
+                            <p>&quot;{similarQuestion}&quot;</p>
+                            <p className="mt-1 text-caption">กรุณาเปลี่ยนคำถามให้แตกต่างมากขึ้น</p>
+                          </Alert>
+                        ) : (
+                          <Badge tone="success">
+                            <FaCheckCircle aria-hidden="true" />
+                            คำถามนี้ยังไม่มีในระบบ
+                          </Badge>
                         )}
                       </div>
-                    </>
-                  ) : selectedGameId ? (
-                    // Other games - not supported yet
-                    <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-                      <p className="text-yellow-800 text-sm">
-                        ขณะนี้รองรับการเพิ่มโจทย์เฉพาะเกม <strong>Ito</strong> เท่านั้น
-                      </p>
-                    </div>
-                  ) : null}
+                    )}
+                  </div>
                 </>
-              )}
-
-              {/* Submit Button */}
-              <button
-                type="submit"
-                disabled={
-                  submitting ||
-                  (feedbackType === 'improvement' && selectedGameId !== 'BWLxJkh45e6RiALRBmcl') ||
-                  (feedbackType === 'improvement' && isDuplicate) ||
-                  isChecking
-                }
-                className="w-full bg-gradient-to-br from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 disabled:from-gray-400 disabled:to-gray-500 disabled:cursor-not-allowed text-white font-bold py-4 rounded-xl transition-all transform hover:scale-105 shadow-lg"
-              >
-                {submitting ? 'กำลังส่ง...' : isChecking ? 'กำลังตรวจสอบ...' : 'ส่งข้อมูล'}
-              </button>
-            </form>
+              ) : selectedGameId ? (
+                // Other games - not supported yet
+                <Alert tone="warning">
+                  ขณะนี้รองรับการเพิ่มโจทย์เฉพาะเกม <strong>Ito</strong> เท่านั้น
+                </Alert>
+              ) : null}
+            </>
           )}
-        </div>
-      </div>
-    </div>
+        </form>
+      )}
+    </Modal>
   );
 }
