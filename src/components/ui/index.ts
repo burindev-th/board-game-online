@@ -11,3 +11,4 @@ export { Input } from "./Input";
 export { PlayerChip } from "./PlayerChip";
 export { Select } from "./Select";
 export { Textarea } from "./Textarea";
+export { Modal } from "./Modal";
