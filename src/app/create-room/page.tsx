@@ -7,7 +7,10 @@ import GameSelector from "./components/GameSelector";
 import MaxPlayersSelector from "./components/MaxPlayersSelector";
 import TimeLimitInput from "./components/TimeLimitInput";
 import RulesModal from "./components/RulesModal";
-import { Alert, Button, Card, Heading, PageShell, Text } from "@/components/ui";
+import { Alert, Button, Heading, Text } from "@/components/ui";
+
+import RoomEntryLayout from "@/components/rooms/RoomEntryLayout";
+import { FaArrowRight } from "react-icons/fa6";
 
 // API Response Types
 interface CreateRoomResponse {
@@ -182,14 +185,14 @@ export default function CreateRoomPage() {
   };
 
   return (
-    <PageShell width="sm" center>
-      <Card padding="lg">
+    <RoomEntryLayout mode="create">
+      <div>
         {/* Header */}
-        <div className="mb-6 text-center md:mb-8">
+        <div className="mb-6">
           <Heading level="h1" className="mb-2">
             สร้างห้องเกม
           </Heading>
-          <Text tone="muted">เริ่มต้นเกมใหม่และเชิญเพื่อนๆ มาเล่น</Text>
+          <Text tone="muted">ตั้งชื่อ เลือกเกม แล้วเตรียมรับเพื่อนเข้าห้อง</Text>
         </div>
 
         {/* API Error Message */}
@@ -237,36 +240,22 @@ export default function CreateRoomPage() {
             disabled={isLoading}
           />
 
-          {/* Buttons */}
-          <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
-            {/* Back Button (hard navigation, as before) */}
-            <Button
-              type="button"
-              variant="outline"
-              size="md"
-              fullWidth
-              onClick={() => (window.location.href = "/")}
-            >
-              กลับหน้าหลัก
-            </Button>
-
-            {/* Submit Button */}
-            <Button
-              type="submit"
-              size="md"
-              fullWidth
-              loading={isLoading}
-              disabled={
-                !!errors.playerName ||
-                !!errors.gameId ||
-                !formData.playerName.trim() ||
-                !formData.gameId ||
-                isLoading
-              }
-            >
-              {isLoading ? "กำลังสร้างห้อง..." : "สร้างห้อง"}
-            </Button>
-          </div>
+          <Button
+            type="submit"
+            size="lg"
+            fullWidth
+            loading={isLoading}
+            disabled={
+              !!errors.playerName ||
+              !!errors.gameId ||
+              !formData.playerName.trim() ||
+              !formData.gameId ||
+              isLoading
+            }
+          >
+            {isLoading ? "กำลังสร้างห้อง..." : "สร้างห้องเกม"}
+            {!isLoading && <FaArrowRight aria-hidden />}
+          </Button>
         </form>
 
         {/* Info Box */}
@@ -275,7 +264,7 @@ export default function CreateRoomPage() {
           หลังจากสร้างห้องแล้ว คุณจะได้รับรหัสห้อง 6 หลักเพื่อแชร์ให้เพื่อนๆ
           เข้าร่วม
         </Alert>
-      </Card>
+      </div>
 
       {/* Rules Modal */}
       <RulesModal
@@ -283,6 +272,6 @@ export default function CreateRoomPage() {
         onClose={() => setShowRulesModal(false)}
         gameName={selectedGame?.name || 'Ito'}
       />
-    </PageShell>
+    </RoomEntryLayout>
   );
 }

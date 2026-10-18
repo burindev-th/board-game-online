@@ -1,7 +1,10 @@
 "use client";
 
 import { useState } from "react";
-import { Alert, Button, Card, Heading, Input, PageShell, Text } from "@/components/ui";
+import { Alert, Button, Heading, Input, Text } from "@/components/ui";
+
+import RoomEntryLayout from "@/components/rooms/RoomEntryLayout";
+import { FaArrowRight } from "react-icons/fa6";
 
 // API Response Types
 interface JoinRoomResponse {
@@ -155,14 +158,14 @@ export default function JoinRoomPage() {
     !errors.playerName;
 
   return (
-    <PageShell backHref="/" backLabel="กลับหน้าหลัก" width="sm" center>
-      <Card padding="lg">
+    <RoomEntryLayout mode="join">
+      <div>
         {/* Header */}
-        <div className="mb-6 text-center md:mb-8">
+        <div className="mb-6">
           <Heading level="h1" className="mb-2">
             เข้าร่วมห้อง
           </Heading>
-          <Text tone="muted">ใส่รหัสห้องเพื่อเข้าร่วมเกม</Text>
+          <Text tone="muted">อีกนิดเดียว ก็ได้สนุกกับเพื่อนแล้ว</Text>
         </div>
 
         {/* API Error Message */}
@@ -182,6 +185,8 @@ export default function JoinRoomPage() {
             value={formatRoomCode(formData.roomCode)}
             onChange={handleRoomCodeChange}
             placeholder="000-000"
+            autoComplete="off"
+            hint="ขอรหัส 6 หลักจากเพื่อนที่สร้างห้อง"
             inputMode="numeric"
             disabled={isLoading}
             error={errors.roomCode || undefined}
@@ -215,7 +220,8 @@ export default function JoinRoomPage() {
             loading={isLoading}
             disabled={!isFormValid || isLoading}
           >
-            {isLoading ? "กำลังเข้าห้อง..." : "เข้าห้อง"}
+            {isLoading ? "กำลังเข้าห้อง..." : "เข้าร่วมห้องเกม"}
+            {!isLoading && <FaArrowRight aria-hidden />}
           </Button>
         </form>
 
@@ -224,7 +230,7 @@ export default function JoinRoomPage() {
           <span className="font-semibold">คำแนะนำ:</span>{" "}
           รหัสห้องเป็นตัวเลข 6 หลักที่ได้รับจากผู้สร้างห้อง
         </Alert>
-      </Card>
-    </PageShell>
+      </div>
+    </RoomEntryLayout>
   );
 }

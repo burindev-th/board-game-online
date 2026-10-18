@@ -1,25 +1,12 @@
 "use client";
 
 import { use, useEffect, useState } from "react";
-import { LuPencil, LuCheck, LuX, LuCopy } from "react-icons/lu";
 import { useRouter } from "next/navigation";
 import { useRoom } from "@/lib/hooks/useRoom";
 import { usePlayers } from "@/lib/hooks/usePlayers";
 import { useGames } from "@/lib/hooks/useGames";
-import {
-  Alert,
-  Badge,
-  Button,
-  Card,
-  Heading,
-  IconButton,
-  PageShell,
-  PlayerChip,
-  Spinner,
-  Text,
-  Input,
-} from "@/components/ui";
-import { cn } from "@/lib/utils/cn";
+import { Alert, Button, Card, Heading, PageShell, Spinner } from "@/components/ui";
+import LobbyView from "@/components/lobby/LobbyView";
 import { kickPlayer, toggleReady, leaveRoom } from "@/lib/firebase/firestore";
 
 interface LobbyPageProps {
@@ -321,198 +308,33 @@ export default function LobbyPage({ params }: LobbyPageProps) {
   }
 
   return (
-    <PageShell
-      width="md"
-      brandLink={false}
-      actions={
-        <Button
-          variant="danger"
-          size="sm"
-          onClick={handleLeaveRoom}
-          disabled={actionLoading}
-        >
-          {actionLoading ? "กำลังออก..." : "ออกจากห้อง"}
-        </Button>
-      }
-    >
-      <div className="space-y-4 md:space-y-6">
-        {/* Game Name & Room Code Header */}
-        <Card variant="primary" padding="md">
-          <h1 className="mb-2 font-heading text-h2 md:text-h2-lg font-bold">
-            {selectedGame?.name || "เกม"}
-          </h1>
-          <p className="text-small">รหัสห้อง:</p>
-          <div className="flex items-center gap-3">
-            <span className="font-number text-h1 md:text-h1-lg font-bold tracking-widest">
-              {room.code.slice(0, 3)}-{room.code.slice(3)}
-            </span>
-            <IconButton
-              variant="outline"
-              size="sm"
-              onClick={handleCopyCode}
-              label="คัดลอกรหัสห้อง"
-              icon={copied ? <LuCheck aria-hidden /> : <LuCopy aria-hidden />}
-            />
-          </div>
-        </Card>
-
-        {/* Error Message */}
-        {actionError && <Alert tone="danger">{actionError}</Alert>}
-
-        {/* Players */}
-        <Card padding="md">
-          <div className="mb-3 flex flex-wrap items-center justify-between gap-2 md:mb-4">
-            <Heading level="h3">ผู้เล่นทั้งหมด</Heading>
-
-            {/* Max Players - Editable by Host */}
-            {isHost ? (
-              <div className="flex items-center gap-2">
-                {editingMaxPlayers ? (
-                  <div className="flex items-center gap-2 rounded-md border-2 border-ink bg-surface-muted px-3 py-1.5">
-                    <span className="text-small text-fg-muted">
-                      {room.currentPlayers}/
-                    </span>
-                    <Input
-                      type="number"
-                      aria-label="จำนวนผู้เล่นสูงสุด"
-                      min={room.currentPlayers}
-                      max={selectedGame?.maxPlayer || 10}
-                      value={newMaxPlayers}
-                      onChange={(e) =>
-                        setNewMaxPlayers(parseInt(e.target.value))
-                      }
-                      className="h-9 w-16 px-2 text-center"
-                    />
-                    <span className="text-small text-fg-muted">คน</span>
-                    <IconButton
-                      variant="primary"
-                      size="sm"
-                      onClick={handleUpdateMaxPlayers}
-                      disabled={
-                        actionLoading ||
-                        newMaxPlayers < room.currentPlayers ||
-                        newMaxPlayers > (selectedGame?.maxPlayer || 10)
-                      }
-                      label="บันทึก"
-                      icon={<LuCheck aria-hidden />}
-                    />
-                    <IconButton
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setEditingMaxPlayers(false)}
-                      disabled={actionLoading}
-                      label="ยกเลิก"
-                      icon={<LuX aria-hidden />}
-                    />
-                  </div>
-                ) : (
-                  <div className="flex items-center gap-2">
-                    <Badge>
-                      {room.currentPlayers}/{room.maxPlayers} คน
-                    </Badge>
-                    <IconButton
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => {
-                        setNewMaxPlayers(room.maxPlayers);
-                        setEditingMaxPlayers(true);
-                      }}
-                      label="แก้ไขจำนวนผู้เล่น"
-                      icon={<LuPencil aria-hidden />}
-                    />
-                  </div>
-                )}
-              </div>
-            ) : (
-              <Badge>
-                {room.currentPlayers}/{room.maxPlayers} คน
-              </Badge>
-            )}
-          </div>
-
-          {/* Players List */}
-          <div className="grid grid-cols-1 gap-2 md:gap-3">
-            {players.map((player, index) => (
-              <PlayerChip
-                key={player.id}
-                name={player.name}
-                colorIndex={index}
-                isHost={player.isHost}
-                className="animate-fade-in"
-                status={
-                  <>
-                    {player.isReady && !player.isHost && (
-                      <Badge tone="success">พร้อม</Badge>
-                    )}
-                    {/* Online status */}
-                    <span
-                      role="img"
-                      aria-label={player.isOnline ? "ออนไลน์" : "ออฟไลน์"}
-                      className={cn(
-                        "h-3 w-3 shrink-0 rounded-full border-2 border-ink",
-                        player.isOnline ? "bg-success" : "bg-surface-muted",
-                      )}
-                    />
-                    {/* Kick Button (Host only, can't kick themselves) */}
-                    {isHost && !player.isHost && (
-                      <Button
-                        variant="danger"
-                        size="sm"
-                        onClick={() => handleKick(player.id, player.name)}
-                        disabled={actionLoading}
-                      >
-                        เตะ
-                      </Button>
-                    )}
-                  </>
-                }
-              />
-            ))}
-          </div>
-        </Card>
-
-        {/* Action Section */}
-        <Card padding="md">
-          <div className="space-y-3 md:space-y-4">
-            {isHost ? (
-              // Host Actions
-              <>
-                <Button
-                  variant="primary"
-                  size="lg"
-                  fullWidth
-                  onClick={handleStartGame}
-                  disabled={!canStartGame || actionLoading}
-                >
-                  {actionLoading ? "กำลังเริ่มเกม..." : "เริ่มเกม"}
-                </Button>
-                {!canStartGame && (
-                  <Text variant="small" tone="muted" className="text-center">
-                    {room.currentPlayers < minPlayers
-                      ? `ต้องมีผู้เล่นอย่างน้อย ${minPlayers} คน`
-                      : "ผู้เล่นทุกคนต้องกดพร้อมก่อน"}
-                  </Text>
-                )}
-              </>
-            ) : (
-              // Player Actions
-              <Button
-                variant={currentPlayer?.isReady ? "outline" : "primary"}
-                size="lg"
-                fullWidth
-                onClick={handleToggleReady}
-                disabled={actionLoading}
-              >
-                {actionLoading
-                  ? "กำลังโหลด..."
-                  : currentPlayer?.isReady
-                  ? "ยกเลิกความพร้อม"
-                  : "พร้อม"}
-              </Button>
-            )}
-          </div>
-        </Card>
-      </div>
-    </PageShell>
+    <LobbyView
+      room={room}
+      players={players}
+      selectedGame={selectedGame}
+      playerId={playerId}
+      isHost={isHost}
+      canStartGame={Boolean(canStartGame)}
+      minPlayers={minPlayers}
+      copied={copied}
+      busy={actionLoading}
+      error={actionError}
+      settings={{
+        editing: editingMaxPlayers,
+        value: newMaxPlayers,
+        onEdit: () => {
+          setNewMaxPlayers(room.maxPlayers);
+          setEditingMaxPlayers(true);
+        },
+        onChange: setNewMaxPlayers,
+        onCancel: () => setEditingMaxPlayers(false),
+        onSave: handleUpdateMaxPlayers,
+      }}
+      onCopy={handleCopyCode}
+      onLeave={handleLeaveRoom}
+      onStart={handleStartGame}
+      onReady={handleToggleReady}
+      onKick={handleKick}
+    />
   );
 }
