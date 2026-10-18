@@ -171,7 +171,7 @@ export default function FeedbackModal({ isOpen, onClose }: FeedbackModalProps) {
       open={isOpen}
       onClose={handleClose}
       title={title}
-      size="lg"
+      size={isFormStep ? "lg" : "sm"}
       footer={footer}
       closeOnBackdrop={!isFormStep}
       closeOnEsc={!isFormStep}
@@ -188,20 +188,20 @@ export default function FeedbackModal({ isOpen, onClose }: FeedbackModalProps) {
         </div>
       ) : step === 'select-type' ? (
         // Step 1: Select Type
-        <div className="space-y-4">
-          <Text tone="muted" className="mb-2">เลือกประเภทที่คุณต้องการ</Text>
-
+        <div className="space-y-3">
           <button
             type="button"
             onClick={() => handleSelectType('issue')}
             className={cn(
               buttonClasses({ variant: 'danger', fullWidth: true }),
-              'h-auto flex-col gap-2 p-6 text-center',
+              'h-auto justify-start gap-3 px-4 py-3 text-left',
             )}
           >
-            <FaBug className="h-10 w-10" aria-hidden="true" />
-            <span className="text-h3">แจ้งปัญหา</span>
-            <span className="text-small font-normal">พบบั๊กหรือข้อผิดพลาดในระบบ</span>
+            <FaBug className="h-6 w-6 shrink-0" aria-hidden="true" />
+            <span className="flex flex-col">
+              <span>แจ้งปัญหา</span>
+              <span className="whitespace-normal text-caption font-normal">พบบั๊กหรือข้อผิดพลาดในระบบ</span>
+            </span>
           </button>
 
           <button
@@ -209,12 +209,14 @@ export default function FeedbackModal({ isOpen, onClose }: FeedbackModalProps) {
             onClick={() => handleSelectType('improvement')}
             className={cn(
               buttonClasses({ variant: 'secondary', fullWidth: true }),
-              'h-auto flex-col gap-2 p-6 text-center',
+              'h-auto justify-start gap-3 px-4 py-3 text-left',
             )}
           >
-            <FaLightbulb className="h-10 w-10" aria-hidden="true" />
-            <span className="text-h3">ช่วยปรับปรุงเกม</span>
-            <span className="text-small font-normal">เพิ่มโจทย์หรือเนื้อหาในเกม</span>
+            <FaLightbulb className="h-6 w-6 shrink-0" aria-hidden="true" />
+            <span className="flex flex-col">
+              <span>ช่วยปรับปรุงเกม</span>
+              <span className="whitespace-normal text-caption font-normal">เพิ่มโจทย์หรือเนื้อหาในเกม</span>
+            </span>
           </button>
         </div>
       ) : (
