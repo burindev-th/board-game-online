@@ -27,7 +27,7 @@ export function buttonClasses({
   fullWidth = false,
 }: { variant?: ButtonVariant; size?: ButtonSize; fullWidth?: boolean } = {}) {
   return cn(
-    "inline-flex select-none items-center justify-center rounded-md border-2 border-ink font-heading font-bold",
+    "inline-flex select-none whitespace-nowrap items-center justify-center rounded-md border-2 border-ink font-heading font-bold",
     "disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50",
     variantClasses[variant],
     sizeClasses[size],

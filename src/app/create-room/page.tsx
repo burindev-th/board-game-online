@@ -243,7 +243,7 @@ export default function CreateRoomPage() {
             <Button
               type="button"
               variant="outline"
-              size="lg"
+              size="md"
               fullWidth
               onClick={() => (window.location.href = "/")}
             >
@@ -253,7 +253,7 @@ export default function CreateRoomPage() {
             {/* Submit Button */}
             <Button
               type="submit"
-              size="lg"
+              size="md"
               fullWidth
               loading={isLoading}
               disabled={
