@@ -6,6 +6,8 @@
 "use client";
 
 import { useState } from "react";
+import { Alert, Badge, Button, Card, Heading, Text, Textarea, cardClasses } from "@/components/ui";
+import { cn } from "@/lib/utils/cn";
 import RevealedNumbersList from "../RevealedNumbersList";
 import {
   calculatePlayerHintStatus,
@@ -103,36 +105,32 @@ export default function VotingPhase({
     <div className="space-y-4 md:space-y-6">
       {/* ส่วนพิมพ์คำใบ้ของตัวเอง */}
       {myAnswers.filter((ans) => !ans.isRevealed).length > 0 && (
-        <div className="bg-gradient-to-r from-purple-500/20 to-pink-500/20 backdrop-blur-lg rounded-2xl md:rounded-3xl shadow-2xl p-4 md:p-8 border border-purple-400/30">
-          <h3 className="text-xl md:text-2xl font-bold text-white mb-3 md:mb-4">
+        <Card padding="lg">
+          <Heading level="h2" as="h3" className="mb-3 md:mb-4">
             คำใบ้ของคุณ
-          </h3>
-          <p className="text-white/70 mb-4 md:mb-6 text-sm md:text-base">
+          </Heading>
+          <Text tone="muted" className="mb-4 md:mb-6">
             คุณสามารถแก้ไขคำใบ้ได้ตลอดจนกว่าจะถูกเปิด
-          </p>
+          </Text>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">
+          <div className="grid grid-cols-1 gap-3 md:grid-cols-2 md:gap-4">
             {myAnswers
               .filter((ans) => !ans.isRevealed)
               .sort((a, b) => a.answerIndex - b.answerIndex)
               .map((ans) => (
-                <div
-                  key={ans.answerIndex}
-                  className="bg-white/10 rounded-xl md:rounded-2xl p-4 md:p-6 border border-white/20"
-                >
-                  <div className="flex items-center justify-between mb-2 md:mb-3">
-                    <div className="text-white/70 text-sm md:text-base">
+                <Card key={ans.answerIndex} variant="muted" padding="sm">
+                  <div className="mb-2 flex items-center justify-between gap-2 md:mb-3">
+                    <Text variant="small" tone="muted" as="div">
                       {myAnswers.length > 1
                         ? `เลขที่ ${ans.answerIndex + 1}:`
                         : "เลขของคุณ:"}
-                    </div>
-                    <div className="text-2xl md:text-3xl font-bold text-yellow-300">
+                    </Text>
+                    <span className="rounded-md border-2 border-ink bg-warning px-3 py-1 font-number text-h2 font-bold tabular-nums text-on-status">
                       {ans.number}
-                    </div>
+                    </span>
                   </div>
 
-                  <textarea
-                    className="w-full p-3 md:p-4 rounded-xl bg-white/10 text-white border border-white/20 focus:border-white/50 focus:outline-none resize-none text-sm md:text-base"
+                  <Textarea
                     rows={2}
                     placeholder={`พิมพ์คำใบ้สำหรับเลข ${ans.number}...`}
                     value={answers[ans.answerIndex] || ""}
@@ -144,52 +142,51 @@ export default function VotingPhase({
                     }
                   />
 
-                  <button
+                  <Button
+                    variant={ans.answer ? "secondary" : "primary"}
+                    fullWidth
+                    loading={submitting}
                     onClick={() => handleSubmitAnswer(ans.answerIndex)}
                     disabled={
                       !answers[ans.answerIndex]?.trim() || submitting
                     }
-                    className={`mt-2 md:mt-3 w-full font-bold py-2 rounded-xl transition-all text-sm md:text-base ${
-                      ans.answer
-                        ? "bg-gradient-to-r from-orange-500 to-amber-600 hover:from-orange-600 hover:to-amber-700 disabled:from-gray-500 disabled:to-gray-600"
-                        : "bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 disabled:from-gray-500 disabled:to-gray-600"
-                    } disabled:cursor-not-allowed text-white`}
+                    className="mt-2 md:mt-3"
                   >
                     {submitting
                       ? "กำลังบันทึก..."
                       : ans.answer
                       ? "อัปเดตคำใบ้"
                       : "บันทึกคำใบ้"}
-                  </button>
-                </div>
+                  </Button>
+                </Card>
               ))}
           </div>
-        </div>
+        </Card>
       )}
 
       {/* ส่วนโหวต */}
-      <div className="bg-white/10 backdrop-blur-lg rounded-2xl md:rounded-3xl shadow-2xl p-4 md:p-8 border border-white/20">
-        <h3 className="text-xl md:text-2xl font-bold text-white mb-3 md:mb-4">
+      <Card padding="lg">
+        <Heading level="h2" as="h3" className="mb-3 md:mb-4">
           เลือกคำใบ้ที่น้อยที่สุด
-        </h3>
-        <p className="text-white/70 mb-3 md:mb-4 text-sm md:text-base">
+        </Heading>
+        <Text tone="muted" className="mb-3 md:mb-4">
           คลิกเลือกคำใบ้ที่คุณคิดว่าสื่อถึงตัวเลขที่น้อยที่สุด
-        </p>
+        </Text>
 
         {/* ประวัติเลขที่เปิดแล้ว */}
         <RevealedNumbersList revealedNumbers={gameState.revealedNumbers} />
 
         {/* แสดง warning หากยังพิมพ์ไม่ครบ */}
         {!allPlayersSubmittedAll && (
-          <div className="text-center text-orange-300 text-sm mb-4 bg-orange-500/20 rounded-lg py-2">
-            ⚠️ รอให้ทุกคนพิมพ์คำใบ้ครบก่อนโหวต
-          </div>
+          <Alert tone="warning" className="mb-4">
+            รอให้ทุกคนพิมพ์คำใบ้ครบก่อนโหวต
+          </Alert>
         )}
 
         {/* ส่วนโหวต - แสดงเฉพาะเมื่อทุกคนส่งครบแล้ว */}
         {allPlayersSubmittedAll ? (
           <>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4 mb-4 md:mb-6">
+            <div className="mb-4 grid grid-cols-1 gap-3 md:mb-6 md:grid-cols-2 md:gap-4">
               {playerAnswers
                 .filter((a) => !a.isRevealed && a.answer.trim() !== "")
                 .map((playerAnswer) => {
@@ -218,48 +215,38 @@ export default function VotingPhase({
                     <button
                       key={answerId}
                       onClick={() => setSelectedAnswerId(answerId)}
-                      className={`p-4 md:p-6 rounded-xl md:rounded-2xl border-2 transition-all cursor-pointer ${
-                        selectedAnswerId === answerId
-                          ? "border-yellow-400 bg-yellow-500/30"
-                          : "border-white/20 bg-white/5 hover:bg-white/10"
-                      }`}
+                      className={cn(
+                        cardClasses({
+                          variant: selectedAnswerId === answerId ? "primary" : "default",
+                          padding: "sm",
+                          interactive: true,
+                        }),
+                        "text-left"
+                      )}
                     >
-                      <div className="text-white/70 text-xs md:text-sm mb-2">
+                      <div className="mb-2 text-caption font-semibold">
                         {playerAnswer.playerName}
                       </div>
-                      <div className="text-white text-lg md:text-2xl font-semibold">
+                      <div className="text-h3 font-semibold">
                         {playerAnswer.answer}
                       </div>
                       {playerAnswer.playerId === playerId && (
-                        <div className="text-blue-300 text-xs md:text-sm mt-2">
-                          (คำใบ้ของคุณ)
+                        <div className="mt-2">
+                          <Badge tone="secondary">(คำใบ้ของคุณ)</Badge>
                         </div>
                       )}
 
                       {/* แสดงว่าใครโหวตคำใบ้นี้ */}
                       {voterNames.length > 0 && (
-                        <div className="mt-2 md:mt-3 pt-2 md:pt-3 from-green-500/20 to-blue-500/20">
-                          <div className="flex items-center gap-2 mb-2 justify-center">
-                            <div className="flex items-center  justify-center w-5 h-5 md:w-6 md:h-6 bg-gradient-to-br from-green-400 to-emerald-500 rounded-full">
-                              <span className="text-white text-xs font-bold">
-                                {voterNames.length}
-                              </span>
-                            </div>
-                            <span className="text-green-400 text-xs md:text-sm font-semibold">
-                              โหวต
-                            </span>
+                        <div className="mt-2 border-t-2 border-ink pt-2 md:mt-3 md:pt-3">
+                          <div className="mb-2 flex items-center justify-center gap-2">
+                            <Badge tone="success">โหวต {voterNames.length}</Badge>
                           </div>
-                          <div className="flex flex-wrap gap-1.5 md:gap-2 justify-center">
+                          <div className="flex flex-wrap justify-center gap-1.5 md:gap-2">
                             {voterNames.map((name, idx) => (
-                              <div
-                                key={idx}
-                                className="group relative px-2 md:px-3 py-1 md:py-1.5 bg-gradient-to-r from-green-500/30 to-emerald-500/30 hover:from-green-500/40 hover:to-emerald-500/40 border border-green-400/30 rounded-lg transition-all duration-200 hover:scale-105"
-                              >
-                                <span className="text-green-200 text-xs md:text-sm font-medium">
-                                  {name}
-                                </span>
-                                <div className="absolute inset-0 bg-gradient-to-r from-green-400/0 via-green-400/10 to-green-400/0 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200" />
-                              </div>
+                              <Badge key={idx} tone="neutral">
+                                {name}
+                              </Badge>
                             ))}
                           </div>
                         </div>
@@ -269,100 +256,84 @@ export default function VotingPhase({
                 })}
             </div>
 
-            <button
+            <Button
+              size="lg"
+              fullWidth
+              loading={submitting}
               onClick={handleSubmitVote}
               disabled={!selectedAnswerId || submitting}
-              className="w-full bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 disabled:from-gray-500 disabled:to-gray-600 disabled:cursor-not-allowed text-white text-lg md:text-xl font-bold py-3 md:py-4 rounded-xl transition-all transform hover:scale-105"
             >
               {submitting ? "กำลังส่ง..." : "ยืนยันการเลือก"}
-            </button>
+            </Button>
           </>
         ) : (
-          <div className="text-center py-6 md:py-8 bg-gray-500/20 rounded-xl md:rounded-2xl">
-            <div className="text-white/70 text-base md:text-lg mb-2">
+          <Card variant="muted" padding="md" className="text-center">
+            <Text tone="muted" as="div" className="mb-2">
               ⏳ รอให้ทุกคนพิมพ์คำใบ้ครบก่อน
-            </div>
-            <div className="text-white/50 text-xs md:text-sm">
+            </Text>
+            <Text variant="caption" tone="subtle" as="div">
               จึงจะสามารถโหวตได้
-            </div>
-          </div>
+            </Text>
+          </Card>
         )}
 
         {/* สถานะผู้เล่น - Minimal Design */}
-        <div className="mt-6 flex gap-3 text-xs text-white/60">
-          <button
+        <div className="mt-6 flex flex-wrap gap-3">
+          <Button
+            variant={statusTab === "hints" ? "primary" : "outline"}
+            size="sm"
             onClick={() => setStatusTab("hints")}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition-all ${
-              statusTab === "hints"
-                ? "bg-white/10 text-white"
-                : "hover:bg-white/5"
-            }`}
+            icon={<span>💭</span>}
           >
-            <span>💭</span>
-            <span>คำใบ้: {totalHintsSubmitted}/{totalHintsExpected}</span>
-          </button>
-          <button
+            คำใบ้: {totalHintsSubmitted}/{totalHintsExpected}
+          </Button>
+          <Button
+            variant={statusTab === "votes" ? "primary" : "outline"}
+            size="sm"
             onClick={() => setStatusTab("votes")}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition-all ${
-              statusTab === "votes"
-                ? "bg-white/10 text-white"
-                : "hover:bg-white/5"
-            }`}
+            icon={<span>🗳️</span>}
           >
-            <span>🗳️</span>
-            <span>โหวต: {voteCount}/{totalPlayers}</span>
-          </button>
+            โหวต: {voteCount}/{totalPlayers}
+          </Button>
         </div>
 
         {/* แสดงรายละเอียดตาม tab ที่เลือก */}
         {statusTab === "hints" && (
-          <div className="mt-2 flex flex-wrap gap-2 text-xs">
+          <div className="mt-3 flex flex-wrap gap-2">
             {playersCompleted.map((p, i) => (
-              <div
-                key={i}
-                className="px-2 py-1 bg-green-500/20 text-green-300 rounded border border-green-500/30"
-              >
+              <Badge key={i} tone="success">
                 {p.playerName}
-              </div>
+              </Badge>
             ))}
             {playersNotCompleted.map(([id, p]) => (
-              <div
-                key={id}
-                className="px-2 py-1 bg-orange-500/20 text-orange-300 rounded border border-orange-500/30"
-              >
+              <Badge key={id} tone="warning">
                 {p.playerName} ({p.submittedCount}/{p.totalExpected})
-              </div>
+              </Badge>
             ))}
           </div>
         )}
 
         {statusTab === "votes" && (
-          <div className="mt-2 flex flex-wrap gap-2 text-xs">
+          <div className="mt-3 flex flex-wrap gap-2">
             {playersWhoVoted.map((id) => {
               const player = playerAnswers.find((a) => a.playerId === id);
               return (
-                <div
-                  key={id}
-                  className="px-2 py-1 bg-green-500/20 text-green-300 rounded border border-green-500/30"
-                >
+                <Badge key={id} tone="success">
                   {player?.playerName}
-                </div>
+                </Badge>
               );
             })}
             {playersWhoNotVoted.map((id) => {
               const player = playerAnswers.find((a) => a.playerId === id);
               return (
-                <div
-                  key={id}
-                  className="px-2 py-1 bg-orange-500/20 text-orange-300 rounded border border-orange-500/30"
-                >
+                <Badge key={id} tone="warning">
                   {player?.playerName}
-                </div>
+                </Badge>
               );
             })}
           </div>
         )}
-      </div>
+      </Card>
     </div>
   );
 }

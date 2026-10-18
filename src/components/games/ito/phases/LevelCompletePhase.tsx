@@ -6,6 +6,8 @@
 "use client";
 
 import { markPlayerReady } from "@/lib/firebase/ito";
+import { Badge, Button, Card, Heading, PlayerChip, Text } from "@/components/ui";
+import { cn } from "@/lib/utils/cn";
 
 type ItoPlayerAnswer = {
   playerId: string;
@@ -87,47 +89,49 @@ export default function LevelCompletePhase({
   };
 
   return (
-    <div className="bg-white/10 backdrop-blur-lg rounded-2xl md:rounded-3xl shadow-2xl p-4 md:p-12 border border-white/20">
-      <div className="text-center mb-6 md:mb-8">
-        <div className="text-6xl md:text-8xl mb-4 md:mb-6">🎊</div>
-        <h3 className="text-2xl md:text-4xl font-bold text-blue-400 mb-3 md:mb-4">
+    <Card padding="lg">
+      <div className="mb-6 text-center md:mb-8">
+        <div className="mb-4 text-display md:mb-6 md:text-display-lg">🎊</div>
+        <Heading level="display" className="mb-3 text-center md:mb-4">
           ผ่านรอบที่ {gameState.currentLevel}!
-        </h3>
-        <p className="text-white/90 text-base md:text-xl">
+        </Heading>
+        <Text tone="muted" className="text-center">
           {gameState.currentLevel >= gameState.totalLevels
             ? "เยี่ยมมาก! เตรียมพร้อมดูผลลัพธ์"
             : "เยี่ยมมาก! เตรียมพร้อมสำหรับรอบถัดไป"}
-        </p>
+        </Text>
       </div>
 
       {/* เลขทั้งหมด (เปิดแล้ว + ยังไม่เปิด) */}
-      <div className="bg-gradient-to-r from-green-500/20 to-blue-500/20 rounded-xl md:rounded-2xl p-3 md:p-6 mb-4 md:mb-6 border border-green-400/30">
-        <h4 className="text-white font-bold mb-3 md:mb-4 text-center text-base md:text-xl">
+      <Card variant="muted" padding="sm" className="mb-4 md:mb-6">
+        <Heading level="h3" as="h4" className="mb-3 text-center md:mb-4">
           ตัวเลขทั้งหมดในรอบนี้
-        </h4>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-2 md:gap-3 max-h-96 overflow-y-auto">
+        </Heading>
+        <div className="grid max-h-96 grid-cols-1 gap-2 overflow-y-auto p-1 md:grid-cols-2 md:gap-3">
           {/* เลขที่เปิดแล้ว */}
           {revealedAnswers.map((ans, i) => (
             <div
               key={i}
-              className="bg-white/10 rounded-lg md:rounded-xl p-2.5 md:p-4 flex items-center justify-between gap-2"
+              className="flex items-center justify-between gap-2 rounded-md border-2 border-ink bg-surface p-2.5 text-fg md:p-3"
             >
-              <div className="flex items-center gap-2 md:gap-4 min-w-0">
-                <div className="text-xl md:text-3xl font-bold text-yellow-300 min-w-[50px] md:min-w-[60px] flex-shrink-0">
-                  [{ans.number}]
-                </div>
-                <div className="text-left min-w-0">
-                  <div className="text-white text-sm md:text-lg truncate">
+              <div className="flex min-w-0 items-center gap-2 md:gap-3">
+                <span className="shrink-0 rounded-md border-2 border-ink bg-warning px-2 py-0.5 font-number text-h3 font-bold tabular-nums text-on-status">
+                  {ans.number}
+                </span>
+                <div className="min-w-0 text-left">
+                  <div className="truncate text-body">
                     &quot;{ans.answer}&quot;
                   </div>
-                  <div className="text-white/50 text-xs md:text-sm">{ans.playerName}</div>
+                  <Text variant="caption" tone="muted" as="div">
+                    {ans.playerName}
+                  </Text>
                 </div>
               </div>
               {ans.isCorrect === true && (
-                <div className="text-green-400 text-lg md:text-xl flex-shrink-0">✓</div>
+                <Badge tone="success" className="shrink-0">✓</Badge>
               )}
               {ans.isCorrect === false && (
-                <div className="text-red-400 text-lg md:text-xl flex-shrink-0">✗</div>
+                <Badge tone="danger" className="shrink-0">✗</Badge>
               )}
             </div>
           ))}
@@ -139,134 +143,137 @@ export default function LevelCompletePhase({
             .map((ans, i) => (
               <div
                 key={`unrevealed-${i}`}
-                className="bg-white/5 rounded-lg md:rounded-xl p-2.5 md:p-4 flex items-center justify-between border border-white/10 gap-2"
+                className="flex items-center justify-between gap-2 rounded-md border-2 border-ink bg-surface-muted p-2.5 text-fg-muted md:p-3"
               >
-                <div className="flex items-center gap-2 md:gap-4 min-w-0">
-                  <div className="text-xl md:text-3xl font-bold text-gray-400 min-w-[50px] md:min-w-[60px] flex-shrink-0">
-                    [{ans.number}]
-                  </div>
-                  <div className="text-left min-w-0">
-                    <div className="text-gray-400 text-sm md:text-lg truncate">
+                <div className="flex min-w-0 items-center gap-2 md:gap-3">
+                  <span className="shrink-0 rounded-md border-2 border-ink bg-surface px-2 py-0.5 font-number text-h3 font-bold tabular-nums">
+                    {ans.number}
+                  </span>
+                  <div className="min-w-0 text-left">
+                    <div className="truncate text-body">
                       &quot;{ans.answer}&quot;
                     </div>
-                    <div className="text-gray-500 text-xs md:text-sm">{ans.playerName}</div>
+                    <div className="text-caption">{ans.playerName}</div>
                   </div>
                 </div>
-                <div className="text-gray-500 text-xs md:text-sm flex-shrink-0">ยังไม่เปิด</div>
+                <Badge tone="neutral" className="shrink-0">ยังไม่เปิด</Badge>
               </div>
             ))}
         </div>
-      </div>
+      </Card>
 
       {/* Progress & Hearts */}
-      <div className="bg-white/5 rounded-xl md:rounded-2xl p-3 md:p-6 mb-4 md:mb-6">
-        <div className="flex items-center justify-between mb-3 md:mb-4">
+      <Card variant="muted" padding="sm" className="mb-4 md:mb-6">
+        <div className="mb-3 flex items-center justify-between gap-3 md:mb-4">
           <div>
-            <div className="text-white/70 text-xs md:text-sm">ความคืบหน้า:</div>
-            <div className="text-lg md:text-2xl font-bold text-yellow-300">
+            <Text variant="caption" tone="muted" as="div">
+              ความคืบหน้า:
+            </Text>
+            <Badge tone="warning" className="mt-1">
               รอบ {gameState.currentLevel} / {gameState.totalLevels}
-            </div>
+            </Badge>
           </div>
           <div>
-            <div className="text-white/70 text-xs md:text-sm text-center mb-1">
+            <Text variant="caption" tone="muted" as="div" className="mb-1 text-center">
               หัวใจคงเหลือ
-            </div>
-            <div className="flex gap-0.5 md:gap-1">
+            </Text>
+            <div className="flex justify-center gap-0.5 md:gap-1">
               {Array.from({ length: 3 }).map((_, i) => (
                 <div
                   key={i}
-                  className={`text-2xl md:text-3xl ${
-                    i < gameState.hearts
-                      ? "text-red-500"
-                      : "text-gray-600 opacity-30"
-                  }`}
+                  className={cn(
+                    "text-h2",
+                    i >= gameState.hearts && "opacity-30 grayscale"
+                  )}
                 >
                   ❤️
                 </div>
               ))}
             </div>
-            <div className="text-base md:text-xl font-bold text-white text-center">
-              {gameState.hearts} / 3
+            <div className="mt-1 flex justify-center">
+              <Badge tone="danger">{gameState.hearts} / 3</Badge>
             </div>
           </div>
         </div>
 
         {gameState.currentLevel < gameState.totalLevels && (
-          <div className="pt-3 md:pt-4 border-t border-white/20 text-center">
-            <div className="text-white/90 font-semibold text-sm md:text-base">
+          <div className="border-t-2 border-ink pt-3 text-center md:pt-4">
+            <Text variant="small" className="font-semibold">
               รอบถัดไป: คนละ {gameState.currentLevel + 1} เลข
-            </div>
+            </Text>
           </div>
         )}
-      </div>
+      </Card>
 
       {/* สถานะผู้เล่น */}
-      <div className="bg-white/5 rounded-xl md:rounded-2xl p-3 md:p-6 mb-4 md:mb-6">
-        <h4 className="text-white font-bold mb-2 md:mb-3 text-center text-sm md:text-base">
+      <Card variant="muted" padding="sm" className="mb-4 md:mb-6">
+        <Heading level="h3" as="h4" className="mb-2 text-center md:mb-3">
           สถานะผู้เล่น
-        </h4>
-        <div className="text-center text-white/70 mb-3 md:mb-4 text-xs md:text-sm">
+        </Heading>
+        <Text variant="small" tone="muted" className="mb-3 text-center md:mb-4">
           {readyCount} / {totalPlayers} คนพร้อมแล้ว
-        </div>
+        </Text>
 
-        <div className="grid grid-cols-2 gap-2 md:gap-4">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 md:gap-4">
           {/* พร้อมแล้ว */}
           <div>
-            <div className="text-green-400 text-xs md:text-sm mb-1 md:mb-2 text-center">
-              ✅ พร้อมแล้ว
+            <div className="mb-1 flex justify-center md:mb-2">
+              <Badge tone="success">✅ พร้อมแล้ว</Badge>
             </div>
-            <div className="space-y-1">
+            <div className="grid gap-2">
               {readyPlayers.map((r) => (
-                <div
+                <PlayerChip
                   key={r.playerId}
-                  className="text-white/80 text-xs md:text-sm text-center bg-green-500/20 rounded py-1"
-                >
-                  {r.playerName}
-                </div>
+                  name={r.playerName}
+                  colorIndex={Math.max(0, uniquePlayerIds.indexOf(r.playerId))}
+                />
               ))}
             </div>
           </div>
 
           {/* รออยู่ */}
           <div>
-            <div className="text-orange-400 text-xs md:text-sm mb-1 md:mb-2 text-center">
-              ⏳ รออยู่
+            <div className="mb-1 flex justify-center md:mb-2">
+              <Badge tone="warning">⏳ รออยู่</Badge>
             </div>
-            <div className="space-y-1">
+            <div className="grid gap-2">
               {notReadyPlayers.map((id) => (
-                <div
+                <PlayerChip
                   key={id}
-                  className="text-white/50 text-xs md:text-sm text-center bg-orange-500/20 rounded py-1"
-                >
-                  {playerNames[id]}
-                </div>
+                  name={playerNames[id]}
+                  colorIndex={uniquePlayerIds.indexOf(id)}
+                />
               ))}
             </div>
           </div>
         </div>
-      </div>
+      </Card>
 
       {/* ปุ่ม */}
       {!isPlayerReady ? (
-        <button
+        <Button
+          size="lg"
+          fullWidth
+          loading={submitting}
           onClick={handleReady}
           disabled={submitting}
-          className="w-full bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 disabled:from-gray-500 disabled:to-gray-600 disabled:cursor-not-allowed text-white text-lg md:text-xl font-bold py-3 md:py-4 rounded-xl transition-all transform hover:scale-105"
         >
           {submitting
             ? "กำลังบันทึก..."
             : gameState.currentLevel >= gameState.totalLevels
             ? "พร้อมดูผลลัพธ์"
             : "พร้อมไปรอบถัดไป"}
-        </button>
+        </Button>
       ) : (
-        <div className="text-center py-3 md:py-4">
-          <div className="text-green-400 text-xl md:text-2xl font-bold mb-2">
-            ✓ คุณพร้อมแล้ว
+        <div className="py-3 text-center md:py-4">
+          <div className="mb-2 flex justify-center">
+            <Badge tone="success">✓ คุณพร้อมแล้ว</Badge>
           </div>
-          <div className="text-white/70 text-sm md:text-base">รอผู้เล่นคนอื่น...</div>
+          <Text variant="small" tone="muted">
+            รอผู้เล่นคนอื่น...
+          </Text>
         </div>
       )}
-    </div>
+    </Card>
   );
 }

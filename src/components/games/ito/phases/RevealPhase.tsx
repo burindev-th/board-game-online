@@ -6,6 +6,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { Alert, Badge, Card, Modal, Text } from "@/components/ui";
 
 type ItoPlayerAnswer = {
   playerId: string;
@@ -67,122 +68,100 @@ export default function RevealPhase({
   const isAutoRevealed = revealedThisRound.length > 1;
 
   return (
-    <>
-      {/* Backdrop */}
-      <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-[60]" />
+    <Modal open onClose={() => {}} dismissible={false} size="md">
+      <div className="space-y-3">
+        {/* Header: Result Status */}
+        <Alert tone={isCorrect ? "success" : "danger"} className="items-center justify-center">
+          <span className="text-h2 font-bold">
+            {isCorrect ? "ถูกต้อง!" : "ผิด!"}
+          </span>
+        </Alert>
 
-      {/* Modal - Mobile Optimized */}
-      <div className="fixed inset-0 z-[70] flex items-center justify-center p-3">
-        <div className="bg-gradient-to-br from-purple-600/20 to-pink-600/20 backdrop-blur-xl rounded-2xl shadow-2xl border border-white/20 w-full max-w-md">
-
-          {/* Main Content - Compact Layout */}
-          <div className="p-5 space-y-3">
-
-            {/* Header: Result Status */}
-            <div className="text-center">
-              <div className={`text-3xl font-bold ${isCorrect ? 'text-green-400' : 'text-red-400'}`}>
-                {isCorrect ? 'ถูกต้อง!' : 'ผิด!'}
-              </div>
+        {/* Voted Number Card - Compact */}
+        <Card variant="muted" padding="sm">
+          {/* Number + Hint in single row */}
+          <div className="flex items-center gap-4">
+            {/* Number */}
+            <div className="shrink-0 rounded-lg border-2 border-ink bg-primary px-4 py-2 font-number text-number font-bold tabular-nums text-primary-on md:text-number-lg">
+              {votedAnswer.number}
             </div>
 
-            {/* Voted Number Card - Compact */}
-            <div className={`
-              rounded-xl p-4 border-2
-              ${isCorrect
-                ? 'bg-green-500/20 border-green-400/50'
-                : 'bg-red-500/20 border-red-400/50'
-              }
-            `}>
-              {/* Number + Hint in single row */}
-              <div className="flex items-center gap-4">
-                {/* Number */}
-                <div className={`
-                  text-5xl font-bold flex-shrink-0
-                  ${isCorrect ? 'text-green-300' : 'text-red-300'}
-                `}>
-                  {votedAnswer.number}
-                </div>
-
-                {/* Hint */}
-                <div className="flex-1 min-w-0">
-                  <div className="text-white/60 text-xs mb-0.5">
-                    {votedAnswer.playerName}
-                  </div>
-                  <div className="text-white text-sm italic truncate">
-                    &quot;{votedAnswer.answer}&quot;
-                  </div>
-                </div>
-              </div>
-
-              {/* Skipped Numbers (if wrong) */}
-              {skippedNumbers.length > 0 && (
-                <div className="mt-3 pt-3 border-t border-red-400/30">
-                  <div className="flex items-center justify-between">
-                    <span className="text-red-300 text-xs">ข้ามไป:</span>
-                    <div className="flex gap-2">
-                      {skippedNumbers.map((num) => (
-                        <span key={num} className="text-red-300 text-lg font-bold">
-                          {num}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-                  <div className="text-red-300/80 text-xs text-right mt-1">
-                    -❤️ {heartsLost} ดวง
-                  </div>
-                </div>
-              )}
-
-              {/* Auto-reveal indicator */}
-              {isAutoRevealed && (
-                <div className="text-white/40 text-xs text-center mt-2 pt-2 border-t border-white/10">
-                  ⚡ เปิดเลขสุดท้ายอัตโนมัติ
-                </div>
-              )}
+            {/* Hint */}
+            <div className="min-w-0 flex-1">
+              <Text variant="caption" tone="muted" as="div" className="mb-0.5">
+                {votedAnswer.playerName}
+              </Text>
+              <Text as="div" className="truncate italic">
+                &quot;{votedAnswer.answer}&quot;
+              </Text>
             </div>
-
-            {/* Progress: Revealed Numbers - Minimal */}
-            <div className="bg-white/5 rounded-lg p-3">
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-white/70 text-xs">เปิดแล้ว:</span>
-                <span className="text-white/90 text-sm font-bold">
-                  {gameState.revealedNumbers.length}
-                </span>
-              </div>
-              <div className="flex flex-wrap gap-1.5">
-                {gameState.revealedNumbers.map((num, i) => (
-                  <div
-                    key={i}
-                    className={`
-                      px-2.5 py-1 rounded text-sm font-bold
-                      ${i === gameState.revealedNumbers.length - 1
-                        ? 'bg-yellow-500/50 text-yellow-100 border border-yellow-400'
-                        : 'bg-white/10 text-white/70'
-                      }
-                    `}
-                  >
-                    {num}
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Countdown - Compact */}
-            <div className="text-center pt-2">
-              <div className="text-3xl font-bold text-yellow-300 mb-1">
-                {countdown}
-              </div>
-              <div className="text-white/50 text-xs">
-                {gameState.status === "won" || gameState.status === "lost"
-                  ? "กำลังสรุปผล..."
-                  : "เตรียมรอบต่อไป..."
-                }
-              </div>
-            </div>
-
           </div>
+
+          {/* Skipped Numbers (if wrong) */}
+          {skippedNumbers.length > 0 && (
+            <div className="mt-3 border-t-2 border-ink pt-3">
+              <div className="flex items-center justify-between gap-2">
+                <Text variant="caption" tone="muted" as="span">
+                  ข้ามไป:
+                </Text>
+                <div className="flex flex-wrap justify-end gap-2">
+                  {skippedNumbers.map((num) => (
+                    <Badge key={num} tone="danger">
+                      {num}
+                    </Badge>
+                  ))}
+                </div>
+              </div>
+              <Text variant="caption" tone="muted" className="mt-1 text-right">
+                -❤️ {heartsLost} ดวง
+              </Text>
+            </div>
+          )}
+
+          {/* Auto-reveal indicator */}
+          {isAutoRevealed && (
+            <Text variant="caption" tone="subtle" className="mt-2 border-t-2 border-ink pt-2 text-center">
+              ⚡ เปิดเลขสุดท้ายอัตโนมัติ
+            </Text>
+          )}
+        </Card>
+
+        {/* Progress: Revealed Numbers - Minimal */}
+        <Card variant="muted" padding="sm">
+          <div className="mb-2 flex items-center justify-between gap-2">
+            <Text variant="caption" tone="muted" as="span">
+              เปิดแล้ว:
+            </Text>
+            <Badge tone="neutral">{gameState.revealedNumbers.length}</Badge>
+          </div>
+          <div className="flex flex-wrap gap-1.5">
+            {gameState.revealedNumbers.map((num, i) => (
+              <Badge
+                key={i}
+                tone={
+                  i === gameState.revealedNumbers.length - 1
+                    ? "warning"
+                    : "neutral"
+                }
+              >
+                {num}
+              </Badge>
+            ))}
+          </div>
+        </Card>
+
+        {/* Countdown - Compact */}
+        <div className="pt-2 text-center">
+          <div className="mb-1 font-number text-h1 font-bold tabular-nums text-fg">
+            {countdown}
+          </div>
+          <Text variant="caption" tone="subtle">
+            {gameState.status === "won" || gameState.status === "lost"
+              ? "กำลังสรุปผล..."
+              : "เตรียมรอบต่อไป..."}
+          </Text>
         </div>
       </div>
-    </>
+    </Modal>
   );
 }
