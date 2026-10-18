@@ -40,7 +40,7 @@ Colors are stored as RGB channels (e.g. `--color-primary: 203 255 73`) so Tailwi
 | `surface-muted` | `#F3F0EA` | `#26262A` | secondary panels, disabled |
 | `fg` | `#0A0A0A` | `#F5F5F2` | primary text |
 | `fg-muted` | `#4A4A4A` | `#B4B4B0` | secondary text |
-| `fg-subtle` | `#6B6B6B` | `#7D7D78` | captions, placeholders |
+| `fg-subtle` | `#6B6B6B` | `#8F8F8A` | captions, placeholders |
 | `ink` | `#0A0A0A` | `#D9D9D4` | all borders and hard shadows |
 | `primary` / `on-primary` | `#CBFF49` / `#0A0A0A` | same | main actions, highlights |
 | `secondary` / `on-secondary` | `#5473FF` / `#0A0A0A` | `#7B93FF` / `#0A0A0A` | secondary actions, info |
@@ -59,7 +59,7 @@ Player colors (`player-1`…`player-8`, black text on all):
 Fonts (all via `next/font/google`, Thai + Latin subsets, exposed as CSS variables):
 - `font-heading`: Bai Jamjuree (600, 700)
 - `font-body` (default `sans`): Anuphan (400, 600, 700)
-- `font-number`: Space Grotesk (700), with `tabular-nums`
+- `font-number`: Space Grotesk (700), with `tabular-nums` (latin subset only)
 
 Kanit is removed.
 
@@ -96,7 +96,7 @@ Weights: 400 / 600 / 700 only.
 - `ThemeScript` is an inline script in `<head>` that sets the `dark` class before paint, so the page doesn't flash on load.
 - `ThemeProvider` is a React context exposing `theme`, `resolvedTheme` and `setTheme`. It listens to system changes while set to `system`.
 - `ThemeToggle` is an `IconButton` that cycles light → dark → system.
-- `/admin/*` is forced to light until admin is migrated, via the admin layout or page wrapper setting `data-force-light`.
+- `/admin/*` is forced to light until admin is migrated, via the `.theme-light` class on `src/app/admin/layout.tsx`.
 
 ## 2. Structure and components
 

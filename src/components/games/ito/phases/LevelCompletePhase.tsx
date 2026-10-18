@@ -92,7 +92,7 @@ export default function LevelCompletePhase({
     <Card padding="lg">
       <div className="mb-6 text-center md:mb-8">
         <div className="mb-4 text-display md:mb-6 md:text-display-lg">🎊</div>
-        <Heading level="display" className="mb-3 text-center md:mb-4">
+        <Heading as="h3" level="h1" className="mb-3 text-center md:mb-4">
           ผ่านรอบที่ {gameState.currentLevel}!
         </Heading>
         <Text tone="muted" className="text-center">

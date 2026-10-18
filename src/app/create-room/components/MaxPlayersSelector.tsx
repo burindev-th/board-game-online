@@ -29,7 +29,7 @@ export default function MaxPlayersSelector({
             เกมนี้รองรับ {selectedGame.minPlayer}-{selectedGame.maxPlayer}{" "}
             คน
             {selectedGame.maxPlayer > 20 && (
-              <Badge tone="warning" className="ml-2">
+              <Badge tone="warning" className="ml-2 whitespace-normal">
                 (⚠️ จำนวนผู้เล่นสูงมาก โปรดตรวจสอบข้อมูลเกม)
               </Badge>
             )}

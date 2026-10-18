@@ -39,6 +39,9 @@ type ModalProps = {
   footer?: ReactNode;
   size?: keyof typeof sizes;
   dismissible?: boolean;
+  closeOnBackdrop?: boolean;
+  closeOnEsc?: boolean;
+  ariaLabel?: string;
   className?: string;
 };
 
@@ -50,6 +53,9 @@ export function Modal({
   footer,
   size = "md",
   dismissible = true,
+  closeOnBackdrop = true,
+  closeOnEsc = true,
+  ariaLabel,
   className,
 }: ModalProps) {
   const titleId = useId();
@@ -70,7 +76,7 @@ export function Modal({
     panelRef.current?.focus();
 
     const onKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape" && dismissible) onCloseRef.current();
+      if (e.key === "Escape" && dismissible && closeOnEsc) onCloseRef.current();
       if (e.key === "Tab") trapFocus(e, panelRef.current);
     };
     document.addEventListener("keydown", onKeyDown);
@@ -79,7 +85,7 @@ export function Modal({
       document.body.style.overflow = previousOverflow;
       previouslyFocused?.focus();
     };
-  }, [open, dismissible, mounted]);
+  }, [open, dismissible, closeOnEsc, mounted]);
 
   if (!open || !mounted) return null;
 
@@ -87,14 +93,15 @@ export function Modal({
     <div className="fixed inset-0 z-modal flex items-center justify-center p-4">
       <div
         aria-hidden
-        className="absolute inset-0 animate-fade-in bg-backdrop/60"
-        onClick={dismissible ? onClose : undefined}
+        className="absolute inset-0 animate-backdrop-in bg-backdrop/60"
+        onClick={dismissible && closeOnBackdrop ? onClose : undefined}
       />
       <div
         ref={panelRef}
         role="dialog"
         aria-modal="true"
         aria-labelledby={title ? titleId : undefined}
+        aria-label={title ? undefined : ariaLabel}
         tabIndex={-1}
         className={cn(
           "relative flex max-h-[90vh] w-full animate-modal-in flex-col rounded-lg border-2 border-ink bg-surface text-fg shadow-brutal-lg outline-none",

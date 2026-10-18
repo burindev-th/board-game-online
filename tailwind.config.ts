@@ -71,6 +71,10 @@ const config: Config = {
           from: { opacity: "0", transform: "translateY(10px)" },
           to: { opacity: "1", transform: "translateY(0)" },
         },
+        "backdrop-in": {
+          from: { opacity: "0" },
+          to: { opacity: "1" },
+        },
         "modal-in": {
           from: { opacity: "0", transform: "translateY(8px)" },
           to: { opacity: "1", transform: "translateY(0)" },
@@ -78,6 +82,7 @@ const config: Config = {
       },
       animation: {
         "fade-in": "fade-in 200ms ease-out both",
+        "backdrop-in": "backdrop-in 200ms ease-out both",
         "modal-in": "modal-in 200ms ease-out both",
       },
     },

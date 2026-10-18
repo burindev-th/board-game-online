@@ -155,7 +155,7 @@ export default function JoinRoomPage() {
     !errors.playerName;
 
   return (
-    <PageShell backHref="/" width="sm">
+    <PageShell backHref="/" backLabel="กลับหน้าหลัก" width="sm">
       <Card padding="lg">
         {/* Header */}
         <div className="mb-6 text-center md:mb-8">

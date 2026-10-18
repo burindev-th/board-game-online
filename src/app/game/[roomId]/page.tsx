@@ -162,14 +162,14 @@ export default function GamePage({ params }: GamePageProps) {
               </Text>
             </div>
 
-            <div className="flex flex-wrap gap-2">
+            <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
               {players.map((player, index) => (
                 <PlayerChip
                   key={player.id}
                   name={player.name}
                   colorIndex={index}
                   isHost={player.isHost}
-                  className="animate-fade-in"
+                  className="min-w-0 animate-fade-in"
                   status={
                     <>
                       {player.id === playerId && <Badge tone="secondary">คุณ</Badge>}

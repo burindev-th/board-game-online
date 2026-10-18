@@ -68,7 +68,7 @@ export default function RevealPhase({
   const isAutoRevealed = revealedThisRound.length > 1;
 
   return (
-    <Modal open onClose={() => {}} dismissible={false} size="md">
+    <Modal open onClose={() => {}} dismissible={false} ariaLabel="เปิดเผยตัวเลข" size="md">
       <div className="space-y-3">
         {/* Header: Result Status */}
         <Alert tone={isCorrect ? "success" : "danger"} className="items-center justify-center">

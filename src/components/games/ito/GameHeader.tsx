@@ -81,9 +81,8 @@ export default function GameHeader({
   return (
     <Card
       padding="none"
-      style={{ position: "sticky", top: 10, zIndex: 50 }}
       className={cn(
-        "my-2 mb-3 transition-all duration-300 ease-in-out md:mb-6",
+        "sticky top-2.5 z-10 my-2 mb-3 transition-all duration-300 ease-in-out md:mb-6",
         isScrolled ? "scale-95" : "scale-100",
       )}
     >

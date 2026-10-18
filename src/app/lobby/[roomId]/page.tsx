@@ -323,6 +323,7 @@ export default function LobbyPage({ params }: LobbyPageProps) {
   return (
     <PageShell
       width="md"
+      brandLink={false}
       actions={
         <Button
           variant="danger"

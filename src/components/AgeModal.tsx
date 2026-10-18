@@ -61,6 +61,7 @@ export default function AgeModal() {
       open={isOpen}
       onClose={() => {}}
       dismissible={false}
+      ariaLabel="เลือกช่วงอายุ"
       size="md"
       footer={
         <Text variant="caption" tone="muted" className="w-full text-center">

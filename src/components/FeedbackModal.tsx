@@ -167,7 +167,15 @@ export default function FeedbackModal({ isOpen, onClose }: FeedbackModalProps) {
   ) : undefined;
 
   return (
-    <Modal open={isOpen} onClose={handleClose} title={title} size="lg" footer={footer}>
+    <Modal
+      open={isOpen}
+      onClose={handleClose}
+      title={title}
+      size="lg"
+      footer={footer}
+      closeOnBackdrop={!isFormStep}
+      closeOnEsc={!isFormStep}
+    >
       {success ? (
         <div className="py-8 text-center">
           <div className="mx-auto mb-4 flex h-20 w-20 items-center justify-center rounded-full border-2 border-ink bg-success text-on-status">

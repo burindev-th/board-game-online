@@ -11,12 +11,13 @@ type PageShellProps = {
   children: ReactNode;
   backHref?: string;
   backLabel?: string;
+  brandLink?: boolean;
   actions?: ReactNode;
   width?: keyof typeof widths;
   className?: string;
 };
 
-export function PageShell({ children, backHref, backLabel = "กลับ", actions, width = "md", className }: PageShellProps) {
+export function PageShell({ children, backHref, backLabel = "กลับ", brandLink = true, actions, width = "md", className }: PageShellProps) {
   return (
     <div className="min-h-screen bg-bg text-fg">
       <header className="mx-auto flex w-full max-w-5xl items-center justify-between gap-3 px-4 py-4">
@@ -24,10 +25,12 @@ export function PageShell({ children, backHref, backLabel = "กลับ", acti
           <Button href={backHref} variant="ghost" size="sm" icon={<LuArrowLeft aria-hidden />}>
             {backLabel}
           </Button>
-        ) : (
+        ) : brandLink ? (
           <Link href="/" className="font-heading text-h3 font-bold">
             บอร์ดเกม
           </Link>
+        ) : (
+          <span className="font-heading text-h3 font-bold">บอร์ดเกม</span>
         )}
         <div className="flex items-center gap-2">
           {actions}

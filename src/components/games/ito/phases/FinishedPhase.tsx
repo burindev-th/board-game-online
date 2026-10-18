@@ -38,7 +38,7 @@ export default function FinishedPhase({
       {gameState.status === "won" ? (
         <>
           <div className="mb-4 animate-bounce text-display md:mb-6 md:text-display-lg">🎉</div>
-          <Heading level="display" className="mb-3 text-center md:mb-4">
+          <Heading as="h3" level="h1" className="mb-3 text-center md:mb-4">
             ชนะแล้ว!
           </Heading>
           <Text tone="muted" className="mb-4 text-center md:mb-6">
@@ -48,7 +48,7 @@ export default function FinishedPhase({
       ) : (
         <>
           <div className="mb-4 text-display md:mb-6 md:text-display-lg">💔</div>
-          <Heading level="display" className="mb-3 text-center md:mb-4">
+          <Heading as="h3" level="h1" className="mb-3 text-center md:mb-4">
             แพ้แล้ว
           </Heading>
           <Text tone="muted" className="mb-4 text-center md:mb-6">

@@ -40,7 +40,7 @@ export default function PlayerStatusTracker({
           <div className="mb-1 flex justify-center md:mb-2">
             <Badge tone="success">✅ ส่งครบแล้ว</Badge>
           </div>
-          <div className="grid gap-2">
+          <div className="grid grid-cols-1 gap-2">
             {playersCompleted.map((p, i) => (
               <PlayerChip
                 key={i}
@@ -61,7 +61,7 @@ export default function PlayerStatusTracker({
           <div className="mb-1 flex justify-center md:mb-2">
             <Badge tone="warning">⏳ ยังส่งไม่ครบ</Badge>
           </div>
-          <div className="grid gap-2">
+          <div className="grid grid-cols-1 gap-2">
             {playersNotCompleted.map(([id, p], i) => (
               <PlayerChip
                 key={id}
