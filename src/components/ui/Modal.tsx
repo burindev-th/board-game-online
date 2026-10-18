@@ -63,7 +63,7 @@ export function Modal({
   }, [onClose]);
 
   useEffect(() => {
-    if (!open) return;
+    if (!open || !mounted) return;
     const previouslyFocused = document.activeElement as HTMLElement | null;
     const previousOverflow = document.body.style.overflow;
     document.body.style.overflow = "hidden";
@@ -79,7 +79,7 @@ export function Modal({
       document.body.style.overflow = previousOverflow;
       previouslyFocused?.focus();
     };
-  }, [open, dismissible]);
+  }, [open, dismissible, mounted]);
 
   if (!open || !mounted) return null;
 
