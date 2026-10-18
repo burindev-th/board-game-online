@@ -9,7 +9,7 @@ Give the app a distinctive, consistent visual identity (neo-brutalist), with lig
 
 Constraints:
 - No gradients, no `backdrop-blur`/glassmorphism, no translucent layered backgrounds.
-- Every token has a light and a dark value.
+- Every color token has a light and a dark value (a token may use the same value in both).
 - Stay on Tailwind 3 (no framework migration this round).
 
 ## Current state (2026-10-19)
@@ -47,6 +47,7 @@ Colors are stored as RGB channels (e.g. `--color-primary: 203 255 73`) so Tailwi
 | `success` | `#3DDC84` | same | text on it: `#0A0A0A` |
 | `warning` | `#FFC93C` | same | text on it: `#0A0A0A` |
 | `danger` | `#FF5A5F` | same | text on it: `#0A0A0A` |
+| `backdrop` | `#0A0A0A` | `#000000` | modal backdrop (used at 60%) |
 
 Note: `on-secondary` is black, not white. White on `#5473FF` is about 4.2:1, below WCAG AA for 16px text. Black is about 5:1.
 
@@ -115,14 +116,14 @@ All components accept `className`, which is merged with `cn()` so caller classes
 | `Button` | `variant`: primary · secondary · outline · ghost · danger; `size`: sm · md · lg; `href` (renders `next/link`); `loading`; `icon`; `fullWidth` |
 | `IconButton` | `icon`, `label` (required, aria-label), `variant`, `size` |
 | `Card` | `variant`: default · muted · primary; `padding`: sm · md · lg; `interactive` |
-| `Modal` | `open`, `onClose`, `title`, `footer`, `size`: sm · md · lg. Esc and backdrop click close it, body scroll is locked, focus moves into the modal and returns afterwards. Backdrop is a solid `fg` at 60% opacity, no blur. |
+| `Modal` | `open`, `onClose`, `title`, `footer`, `size`: sm · md · lg. Esc and backdrop click close it, body scroll is locked, focus moves into the modal and returns afterwards. `dismissible` (default `true`; when `false` there is no close button and Esc and backdrop do nothing, e.g. AgeModal). Backdrop is solid `backdrop` at 60% opacity, no blur. |
 | `Input` / `Textarea` / `Select` | `label`, `error`, `hint`, plus native props |
 | `Badge` | `tone`: neutral · primary · secondary · success · warning · danger |
 | `PlayerChip` | `name`, `colorIndex`, `isHost`, `status` |
 | `Alert` | `tone`, `title`, `children` |
 | `Spinner` | `size` |
 | `Heading` | `level` (display · h1 · h2 · h3), `as` |
-| `Text` | `variant` (body · small · caption), `tone` (default · muted · subtle), `as` |
+| `Text` | `variant` (body · small · caption · number), `tone` (default · muted · subtle), `as` |
 | `PageShell` | page container plus a header with the logo/back link and `ThemeToggle` |
 
 Dependencies: add `clsx` and `tailwind-merge`; remove `bootstrap`.
@@ -133,7 +134,6 @@ Migrate to tokens and components:
 - `src/app/page.tsx`, `src/app/create-room/**`, `src/app/join-room/page.tsx`, `src/app/lobby/[roomId]/page.tsx`, `src/app/game/[roomId]/page.tsx`
 - `src/components/games/**` (ItoGame, ito components, all phases)
 - `src/components/AgeModal.tsx`, `src/components/FeedbackModal.tsx`, `src/app/create-room/components/RulesModal.tsx`, rebuilt on `Modal`
-- `src/components/reactbits/RotatingText.tsx`: only its color/radius classes
 
 Rules for migrated files:
 - No `bg-gradient*`, `from-*`/`via-*`/`to-*`, or `backdrop-blur*`.
@@ -143,7 +143,7 @@ Rules for migrated files:
 
 Behavior (game logic, hooks, Firebase) is unchanged. This is visual only.
 
-Out of scope: `src/app/admin/**` (separate follow-up task) and any change to game flow.
+Out of scope: `src/components/reactbits/RotatingText.tsx` (imported nowhere, and it has no theme classes), `src/app/admin/**` (separate follow-up task) and any change to game flow.
 
 ## 4. Verification
 
@@ -155,4 +155,4 @@ The project has no test framework. Verify with:
    - toggle persists
    - modals: Esc, backdrop and focus behave correctly
    - text contrast is readable
-4. Admin pages still render (light) and are visually unchanged.
+4. Admin pages still render correctly in light mode, even when the system or user preference is dark. Their colors are unchanged. The font changes to Anuphan. Radius shifts slightly because `sm`/`md`/`lg`/`DEFAULT` change value globally. Both changes are accepted.
