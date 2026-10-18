@@ -12,6 +12,8 @@ type PageShellProps = {
   backHref?: string;
   backLabel?: string;
   brandLink?: boolean;
+  /** ซ่อนชื่อเว็บที่มุมซ้าย (เช่นหน้าแรกที่มีชื่อใหญ่อยู่แล้ว) */
+  showBrand?: boolean;
   actions?: ReactNode;
   width?: keyof typeof widths;
   /** จัดเนื้อหาให้อยู่กึ่งกลางแนวตั้งของจอ (หน้าฟอร์มสั้นๆ) */
@@ -19,7 +21,7 @@ type PageShellProps = {
   className?: string;
 };
 
-export function PageShell({ children, backHref, backLabel = "กลับ", brandLink = true, actions, width = "md", center = false, className }: PageShellProps) {
+export function PageShell({ children, backHref, backLabel = "กลับ", brandLink = true, showBrand = true, actions, width = "md", center = false, className }: PageShellProps) {
   return (
     <div className="flex min-h-screen flex-col bg-bg text-fg">
       <header className="mx-auto flex w-full max-w-5xl items-center justify-between gap-3 px-4 py-4">
@@ -27,6 +29,8 @@ export function PageShell({ children, backHref, backLabel = "กลับ", bran
           <Button href={backHref} variant="ghost" size="sm" icon={<LuArrowLeft aria-hidden />}>
             {backLabel}
           </Button>
+        ) : !showBrand ? (
+          <span />
         ) : brandLink ? (
           <Link href="/" className="font-heading text-h3 font-bold">
             บอร์ดเกม
