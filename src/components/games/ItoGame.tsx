@@ -21,7 +21,6 @@ import {
 // Components
 import { Spinner } from "@/components/ui";
 import GameHeader from "./ito/GameHeader";
-import MyNumbersDisplay from "./ito/MyNumbersDisplay";
 import WritingPhase from "./ito/phases/WritingPhase";
 import VotingPhase from "./ito/phases/VotingPhase";
 import RevealPhase from "./ito/phases/RevealPhase";
@@ -452,19 +451,21 @@ export default function ItoGame({ sessionId, playerId }: ItoGameProps) {
         createdBy={gameState.questionCreatedBy}
         revealedCount={gameState.revealedNumbers.length}
         totalRounds={gameState.totalRounds}
+        currentLevel={gameState.currentLevel}
+        totalLevels={gameState.totalLevels}
         hearts={gameState.hearts}
         phase={gameState.phase}
         status={gameState.status}
         lastRevealResult={gameState.lastRevealResult || null}
         timeLeft={timeLeft}
         phaseEndTime={gameState.phaseEndTime}
+        myNumbers={[...answersWithIndex]
+          .sort((a, b) => a.answerIndex - b.answerIndex)
+          .map((a) => ({ number: a.number, isRevealed: a.isRevealed }))}
       />
 
       {/* Content Container */}
       <div className="space-y-4 md:space-y-6">
-        {/* My Numbers Display */}
-        <MyNumbersDisplay myAnswers={answersWithIndex} />
-
       {/* Phase: Writing */}
       {gameState.phase === "writing" && (
         <WritingPhase

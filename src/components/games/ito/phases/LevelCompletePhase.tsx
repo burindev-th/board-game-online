@@ -6,8 +6,9 @@
 "use client";
 
 import { markPlayerReady } from "@/lib/firebase/ito";
-import { LuCheck, LuCircleCheck, LuHourglass, LuPartyPopper, LuX } from "react-icons/lu";
-import { Badge, Button, Card, Heading, Hearts, PlayerChip, Text } from "@/components/ui";
+import { LuCheck, LuPartyPopper, LuX } from "react-icons/lu";
+import { Badge, Button, Card, Heading, Hearts, Text } from "@/components/ui";
+import PlayerProgress from "../PlayerProgress";
 
 type ItoPlayerAnswer = {
   playerId: string;
@@ -63,9 +64,6 @@ export default function LevelCompletePhase({
 
   // หาว่าใครพร้อมแล้ว
   const readyPlayerIds = readyPlayers.map((r) => r.playerId);
-  const notReadyPlayers = uniquePlayerIds.filter(
-    (id) => !readyPlayerIds.includes(id)
-  );
 
   // เรียงเลขที่เปิดแล้ว + ดึงคำใบ้
   const revealedAnswers = playerAnswers
@@ -89,10 +87,10 @@ export default function LevelCompletePhase({
   };
 
   return (
-    <Card padding="lg">
-      <div className="mb-6 text-center md:mb-8">
-        <div className="mx-auto mb-4 inline-flex h-20 w-20 items-center justify-center rounded-lg border-2 border-ink bg-primary text-primary-on shadow-brutal md:mb-6"><LuPartyPopper className="h-10 w-10" aria-hidden /></div>
-        <Heading as="h3" level="h1" className="mb-3 text-center md:mb-4">
+    <Card padding="md">
+      <div className="mb-4 text-center md:mb-6">
+        <div className="mx-auto mb-4 inline-flex h-16 w-16 items-center justify-center rounded-lg border-2 border-ink bg-primary text-primary-on shadow-brutal md:h-20 md:w-20"><LuPartyPopper className="h-8 w-8 md:h-10 md:w-10" aria-hidden /></div>
+        <Heading as="h3" level="h1" className="mb-1 text-center">
           ผ่านรอบที่ {gameState.currentLevel}!
         </Heading>
         <Text tone="muted" className="text-center">
@@ -102,8 +100,61 @@ export default function LevelCompletePhase({
         </Text>
       </div>
 
+      {/* สรุปสั้น: หัวใจ + รอบถัดไป */}
+      <div className="mb-4 grid grid-cols-2 gap-2 md:mb-6">
+        <div className="flex flex-col items-center gap-1 rounded-md border-2 border-ink bg-surface-muted p-3">
+          <Text variant="caption" tone="muted" as="span">หัวใจคงเหลือ</Text>
+          <Hearts total={3} remaining={gameState.hearts} size="md" />
+        </div>
+        <div className="flex flex-col items-center gap-1 rounded-md border-2 border-ink bg-surface-muted p-3 text-center">
+          <Text variant="caption" tone="muted" as="span">
+            {gameState.currentLevel < gameState.totalLevels ? "รอบถัดไป" : "ความคืบหน้า"}
+          </Text>
+          <span className="font-heading text-body font-bold">
+            {gameState.currentLevel < gameState.totalLevels
+              ? `คนละ ${gameState.currentLevel + 1} เลข`
+              : `ครบ ${gameState.totalLevels} รอบ`}
+          </span>
+        </div>
+      </div>
+
+      {/* พร้อมไปต่อ: ปุ่มหลักลอยติดล่างจอ */}
+      <div className="sticky bottom-3 z-10 mb-4 md:mb-6">
+        {!isPlayerReady ? (
+          <Button
+            size="lg"
+            fullWidth
+            loading={submitting}
+            onClick={handleReady}
+            disabled={submitting}
+            className="shadow-brutal"
+          >
+            {gameState.currentLevel >= gameState.totalLevels
+              ? "พร้อมดูผลลัพธ์"
+              : "พร้อมไปรอบถัดไป"}
+          </Button>
+        ) : (
+          <div className="flex items-center justify-center gap-2 rounded-md border-2 border-ink bg-success px-4 py-3 font-heading font-bold text-on-status shadow-brutal">
+            <LuCheck className="h-5 w-5" aria-hidden /> คุณพร้อมแล้ว — รอเพื่อนๆ
+          </div>
+        )}
+      </div>
+
+      <div className="mb-4 md:mb-6">
+        <PlayerProgress
+          label="พร้อมแล้ว"
+          done={readyCount}
+          total={totalPlayers}
+          players={uniquePlayerIds.map((id) => ({
+            id,
+            name: playerNames[id],
+            done: readyPlayerIds.includes(id),
+          }))}
+        />
+      </div>
+
       {/* เลขทั้งหมด (เปิดแล้ว + ยังไม่เปิด) */}
-      <Card variant="muted" padding="sm" className="mb-4 md:mb-6">
+      <Card variant="muted" padding="sm" className="">
         <Heading level="h3" as="h4" className="mb-3 text-center md:mb-4">
           ตัวเลขทั้งหมดในรอบนี้
         </Heading>
@@ -115,7 +166,7 @@ export default function LevelCompletePhase({
               className="flex items-center justify-between gap-2 rounded-md border-2 border-ink bg-surface p-2.5 text-fg md:p-3"
             >
               <div className="flex min-w-0 items-center gap-2 md:gap-3">
-                <span className="shrink-0 rounded-md border-2 border-ink bg-warning px-2 py-0.5 font-number text-h3 font-bold tabular-nums text-on-status">
+                <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-md border-2 border-ink bg-warning font-number text-h3 font-bold tabular-nums text-on-status">
                   {ans.number}
                 </span>
                 <div className="min-w-0 text-left">
@@ -146,7 +197,7 @@ export default function LevelCompletePhase({
                 className="flex items-center justify-between gap-2 rounded-md border-2 border-ink bg-surface-muted p-2.5 text-fg-muted md:p-3"
               >
                 <div className="flex min-w-0 items-center gap-2 md:gap-3">
-                  <span className="shrink-0 rounded-md border-2 border-ink bg-surface px-2 py-0.5 font-number text-h3 font-bold tabular-nums">
+                  <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-md border-2 border-ink bg-surface font-number text-h3 font-bold tabular-nums">
                     {ans.number}
                   </span>
                   <div className="min-w-0 text-left">
@@ -162,108 +213,6 @@ export default function LevelCompletePhase({
         </div>
       </Card>
 
-      {/* Progress & Hearts */}
-      <Card variant="muted" padding="sm" className="mb-4 md:mb-6">
-        <div className="mb-3 flex items-center justify-between gap-3 md:mb-4">
-          <div>
-            <Text variant="caption" tone="muted" as="div">
-              ความคืบหน้า:
-            </Text>
-            <Badge tone="warning" className="mt-1">
-              รอบ {gameState.currentLevel} / {gameState.totalLevels}
-            </Badge>
-          </div>
-          <div>
-            <Text variant="caption" tone="muted" as="div" className="mb-1 text-center">
-              หัวใจคงเหลือ
-            </Text>
-            <div className="flex justify-center">
-              <Hearts total={3} remaining={gameState.hearts} size="md" />
-            </div>
-            <div className="mt-1 flex justify-center">
-              <Badge tone="danger">{gameState.hearts} / 3</Badge>
-            </div>
-          </div>
-        </div>
-
-        {gameState.currentLevel < gameState.totalLevels && (
-          <div className="border-t-2 border-ink pt-3 text-center md:pt-4">
-            <Text variant="small" className="font-semibold">
-              รอบถัดไป: คนละ {gameState.currentLevel + 1} เลข
-            </Text>
-          </div>
-        )}
-      </Card>
-
-      {/* สถานะผู้เล่น */}
-      <Card variant="muted" padding="sm" className="mb-4 md:mb-6">
-        <Heading level="h3" as="h4" className="mb-2 text-center md:mb-3">
-          สถานะผู้เล่น
-        </Heading>
-        <Text variant="small" tone="muted" className="mb-3 text-center md:mb-4">
-          {readyCount} / {totalPlayers} คนพร้อมแล้ว
-        </Text>
-
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 md:gap-4">
-          {/* พร้อมแล้ว */}
-          <div>
-            <div className="mb-1 flex justify-center md:mb-2">
-              <Badge tone="success"><LuCircleCheck className="h-4 w-4" aria-hidden /> พร้อมแล้ว</Badge>
-            </div>
-            <div className="grid gap-2">
-              {readyPlayers.map((r) => (
-                <PlayerChip
-                  key={r.playerId}
-                  name={r.playerName}
-                  colorIndex={Math.max(0, uniquePlayerIds.indexOf(r.playerId))}
-                />
-              ))}
-            </div>
-          </div>
-
-          {/* รออยู่ */}
-          <div>
-            <div className="mb-1 flex justify-center md:mb-2">
-              <Badge tone="warning"><LuHourglass className="h-4 w-4" aria-hidden /> รออยู่</Badge>
-            </div>
-            <div className="grid gap-2">
-              {notReadyPlayers.map((id) => (
-                <PlayerChip
-                  key={id}
-                  name={playerNames[id]}
-                  colorIndex={uniquePlayerIds.indexOf(id)}
-                />
-              ))}
-            </div>
-          </div>
-        </div>
-      </Card>
-
-      {/* ปุ่ม */}
-      {!isPlayerReady ? (
-        <Button
-          size="lg"
-          fullWidth
-          loading={submitting}
-          onClick={handleReady}
-          disabled={submitting}
-        >
-          {submitting
-            ? "กำลังบันทึก..."
-            : gameState.currentLevel >= gameState.totalLevels
-            ? "พร้อมดูผลลัพธ์"
-            : "พร้อมไปรอบถัดไป"}
-        </Button>
-      ) : (
-        <div className="py-3 text-center md:py-4">
-          <div className="mb-2 flex justify-center">
-            <Badge tone="success"><LuCheck className="h-4 w-4" aria-hidden /> คุณพร้อมแล้ว</Badge>
-          </div>
-          <Text variant="small" tone="muted">
-            รอผู้เล่นคนอื่น...
-          </Text>
-        </div>
-      )}
     </Card>
   );
 }
