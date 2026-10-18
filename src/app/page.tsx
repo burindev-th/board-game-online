@@ -10,8 +10,8 @@ import { cn } from "@/lib/utils/cn";
 export default function Home() {
   const [showFeedbackModal, setShowFeedbackModal] = useState(false);
   return (
-    <PageShell width="lg">
-      <div className="space-y-6 pt-2 md:pt-8">
+    <PageShell width="lg" center>
+      <div className="space-y-6">
         <Card padding="lg">
           {/* Logo/Title */}
           <div className="mb-8 text-center">

@@ -14,12 +14,14 @@ type PageShellProps = {
   brandLink?: boolean;
   actions?: ReactNode;
   width?: keyof typeof widths;
+  /** จัดเนื้อหาให้อยู่กึ่งกลางแนวตั้งของจอ (หน้าฟอร์มสั้นๆ) */
+  center?: boolean;
   className?: string;
 };
 
-export function PageShell({ children, backHref, backLabel = "กลับ", brandLink = true, actions, width = "md", className }: PageShellProps) {
+export function PageShell({ children, backHref, backLabel = "กลับ", brandLink = true, actions, width = "md", center = false, className }: PageShellProps) {
   return (
-    <div className="min-h-screen bg-bg text-fg">
+    <div className="flex min-h-screen flex-col bg-bg text-fg">
       <header className="mx-auto flex w-full max-w-5xl items-center justify-between gap-3 px-4 py-4">
         {backHref ? (
           <Button href={backHref} variant="ghost" size="sm" icon={<LuArrowLeft aria-hidden />}>
@@ -37,7 +39,16 @@ export function PageShell({ children, backHref, backLabel = "กลับ", bran
           <ThemeToggle />
         </div>
       </header>
-      <main className={cn("mx-auto w-full px-4 pb-12", widths[width], className)}>{children}</main>
+      <main
+        className={cn(
+          "mx-auto w-full px-4 pb-12",
+          center && "flex flex-1 flex-col justify-center pb-20",
+          widths[width],
+          className,
+        )}
+      >
+        {children}
+      </main>
     </div>
   );
 }

@@ -182,7 +182,7 @@ export default function CreateRoomPage() {
   };
 
   return (
-    <PageShell width="sm">
+    <PageShell width="sm" center>
       <Card padding="lg">
         {/* Header */}
         <div className="mb-6 text-center md:mb-8">
