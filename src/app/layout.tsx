@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Anuphan, Bai_Jamjuree, Space_Grotesk } from "next/font/google";
 import "./globals.css";
 import AgeModal from "@/components/AgeModal";
+import { ThemeProvider, ThemeScript } from "@/components/theme";
 import { cn } from "@/lib/utils/cn";
 
 const bodyFont = Anuphan({
@@ -36,10 +37,19 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="th" className={cn(bodyFont.variable, headingFont.variable, numberFont.variable)}>
+    <html
+      lang="th"
+      className={cn(bodyFont.variable, headingFont.variable, numberFont.variable)}
+      suppressHydrationWarning
+    >
+      <head>
+        <ThemeScript />
+      </head>
       <body>
-        {children}
-        <AgeModal />
+        <ThemeProvider>
+          {children}
+          <AgeModal />
+        </ThemeProvider>
       </body>
     </html>
   );

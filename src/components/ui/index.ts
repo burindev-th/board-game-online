@@ -12,3 +12,4 @@ export { PlayerChip } from "./PlayerChip";
 export { Select } from "./Select";
 export { Textarea } from "./Textarea";
 export { Modal } from "./Modal";
+export { PageShell } from "./PageShell";
