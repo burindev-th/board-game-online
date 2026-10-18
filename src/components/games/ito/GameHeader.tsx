@@ -121,7 +121,7 @@ export default function GameHeader({
 
           {/* Center: Hearts */}
           <Badge
-            tone="danger"
+            tone="neutral"
             className={cn(
               "gap-2 px-4 transition-all duration-300 ease-in-out",
               isScrolled ? "py-2" : "py-3",
@@ -165,7 +165,7 @@ export default function GameHeader({
 
           {/* Hearts + Timer Row (wraps onto 2 rows on very narrow screens) */}
           <div className="flex flex-wrap items-center justify-between gap-2">
-            <Badge tone="danger" className="gap-1.5 px-3 py-1.5">
+            <Badge tone="neutral" className="gap-1.5 px-3 py-1.5">
               {hearts3}
             </Badge>
 
