@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { usePathname } from 'next/navigation';
 import { saveAge, shouldAskAge } from '@/lib/utils/ageStorage';
 import { saveAgeToFirebase } from '@/lib/firebase/age';
+import { Alert, Button, Heading, Modal, Text } from '@/components/ui';
 
 const AGE_RANGES = [
   { label: 'ต่ำกว่า 18 ปี', value: '0-17', emoji: '👶' },
@@ -55,77 +56,65 @@ export default function AgeModal() {
     }
   };
 
-  if (!isOpen) return null;
-
   return (
-    <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/50 backdrop-blur-sm">
-      <div className="bg-white rounded-3xl shadow-2xl max-w-md w-full mx-4 overflow-hidden animate-fadeIn">
-        {/* Header with gradient */}
-        <div className="bg-gradient-to-br from-blue-500 to-purple-600 px-8 py-10 text-center">
-          <div className="w-20 h-20 bg-white/20 backdrop-blur rounded-full flex items-center justify-center mx-auto mb-4">
-            <svg className="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-            </svg>
-          </div>
-          <h2 className="text-3xl font-bold text-white mb-2">ยินดีต้อนรับ!</h2>
-          <p className="text-white/90 text-sm">กรุณาบอกอายุของคุณเพื่อประสบการณ์ที่ดีที่สุด</p>
+    <Modal
+      open={isOpen}
+      onClose={() => {}}
+      dismissible={false}
+      size="md"
+      footer={
+        <Text variant="caption" tone="muted" className="w-full text-center">
+          เราจะถามอีกครั้งในอีก 30 วันข้างหน้า
+        </Text>
+      }
+    >
+      {/* Header */}
+      <div className="mb-6 text-center">
+        <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full border-2 border-ink bg-primary text-primary-on">
+          <svg className="h-8 w-8" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+          </svg>
         </div>
-
-        {/* Body */}
-        <div className="p-8">
-          <div className="mb-6">
-            <p className="text-gray-700 font-semibold mb-4 text-center">
-              เลือกช่วงอายุของคุณ
-            </p>
-
-            {/* Age Range Cards */}
-            <div className="grid grid-cols-2 gap-3">
-              {AGE_RANGES.map((range) => (
-                <button
-                  key={range.value}
-                  type="button"
-                  onClick={() => handleSelectRange(range.value)}
-                  disabled={isSubmitting}
-                  className={`p-4 rounded-xl border-2 transition-all transform hover:scale-105 disabled:cursor-not-allowed disabled:opacity-50 ${
-                    selectedRange === range.value
-                      ? 'border-blue-500 bg-blue-50'
-                      : 'border-gray-300 hover:border-blue-300 bg-white'
-                  }`}
-                >
-                  <div className="text-3xl mb-2">{range.emoji}</div>
-                  <div className="text-sm font-semibold text-gray-800">
-                    {range.label}
-                  </div>
-                </button>
-              ))}
-            </div>
-
-            {/* Error Message */}
-            {error && (
-              <div className="mt-4 bg-red-50 border border-red-200 rounded-lg px-4 py-3">
-                <p className="text-sm text-red-700 text-center">{error}</p>
-              </div>
-            )}
-
-            {/* Info */}
-            <div className="mt-4 space-y-2">
-              <p className="text-xs text-gray-500 text-center">
-                ข้อมูลจะถูกใช้เพื่อปรับปรุงเกมให้เหมาะสมกับทุกวัย
-              </p>
-              <p className="text-xs text-gray-400 text-center">
-                ไม่เชื่อมโยงกับตัวตน • เก็บในเครื่องของคุณ
-              </p>
-            </div>
-          </div>
-        </div>
-
-        {/* Footer Note */}
-        <div className="bg-gray-50 px-8 py-4 border-t border-gray-200">
-          <p className="text-xs text-gray-600 text-center">
-            เราจะถามอีกครั้งในอีก 30 วันข้างหน้า
-          </p>
-        </div>
+        <Heading level="h2" className="mb-1 text-center">ยินดีต้อนรับ!</Heading>
+        <Text variant="small" tone="muted" className="text-center">
+          กรุณาบอกอายุของคุณเพื่อประสบการณ์ที่ดีที่สุด
+        </Text>
       </div>
-    </div>
+
+      <Text className="mb-4 text-center font-semibold">เลือกช่วงอายุของคุณ</Text>
+
+      {/* Age Range Buttons */}
+      <div className="grid grid-cols-2 gap-3">
+        {AGE_RANGES.map((range) => (
+          <Button
+            key={range.value}
+            variant={selectedRange === range.value ? 'primary' : 'outline'}
+            fullWidth
+            disabled={isSubmitting}
+            onClick={() => handleSelectRange(range.value)}
+            className="justify-start"
+          >
+            {range.emoji} {range.label}
+          </Button>
+        ))}
+      </div>
+
+      {/* Error Message */}
+      {error && (
+        <Alert tone="danger" className="mt-4">
+          {error}
+        </Alert>
+      )}
+
+      {/* Info */}
+      <div className="mt-4 space-y-2">
+        <Text variant="caption" tone="muted" className="text-center">
+          ข้อมูลจะถูกใช้เพื่อปรับปรุงเกมให้เหมาะสมกับทุกวัย
+        </Text>
+        <Text variant="caption" tone="subtle" className="text-center">
+          ไม่เชื่อมโยงกับตัวตน • เก็บในเครื่องของคุณ
+        </Text>
+      </div>
+    </Modal>
   );
 }
