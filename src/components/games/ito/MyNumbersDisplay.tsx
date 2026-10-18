@@ -5,6 +5,8 @@
 
 "use client";
 
+import { Card, Text } from "@/components/ui";
+
 type ItoPlayerAnswerWithIndex = {
   playerId: string;
   playerName: string;
@@ -25,30 +27,30 @@ export default function MyNumbersDisplay({
   if (myAnswers.length === 0) return null;
 
   return (
-    <div className="bg-yellow-500/20 backdrop-blur-lg rounded-2xl md:rounded-3xl shadow-2xl p-4 md:p-6 border-2 border-yellow-400">
-      <div className="text-center">
-        <p className="text-white/70 mb-2 text-sm md:text-base">
-          {myAnswers.length === 1
-            ? "เลขของคุณ:"
-            : `เลขของคุณ (${myAnswers.length} เลข):`}
-        </p>
-        <div className="flex flex-wrap justify-center gap-3 md:gap-4">
-          {myAnswers
-            .sort((a, b) => a.answerIndex - b.answerIndex)
-            .map((ans, idx) => (
-              <div key={idx} className="text-center">
-                <div className="text-4xl md:text-6xl font-bold text-yellow-300">
+    <Card variant="primary" padding="md" className="text-center">
+      <Text variant="small" className="mb-2 text-primary-on">
+        {myAnswers.length === 1
+          ? "เลขของคุณ:"
+          : `เลขของคุณ (${myAnswers.length} เลข):`}
+      </Text>
+      <div className="flex flex-wrap justify-center gap-3 md:gap-4">
+        {myAnswers
+          .sort((a, b) => a.answerIndex - b.answerIndex)
+          .map((ans, idx) => (
+            <div key={idx} className="text-center">
+              <div className="min-w-[5rem] rounded-md border-2 border-ink bg-surface px-3 py-2 text-fg shadow-brutal-sm">
+                <span className="font-number text-number md:text-number-lg font-bold tabular-nums">
                   {ans.number}
-                </div>
-                {myAnswers.length > 1 && (
-                  <div className="text-white/50 text-xs md:text-sm mt-1">
-                    เลขที่ {idx + 1}
-                  </div>
-                )}
+                </span>
               </div>
-            ))}
-        </div>
+              {myAnswers.length > 1 && (
+                <Text variant="caption" className="mt-1 text-primary-on">
+                  เลขที่ {idx + 1}
+                </Text>
+              )}
+            </div>
+          ))}
       </div>
-    </div>
+    </Card>
   );
 }

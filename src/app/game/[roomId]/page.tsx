@@ -8,11 +8,22 @@
 
 import { use, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import Link from "next/link";
+import { LuHouse } from "react-icons/lu";
 import { useRoom } from "@/lib/hooks/useRoom";
 import { usePlayers } from "@/lib/hooks/usePlayers";
 import { useGames } from "@/lib/hooks/useGames";
 import ItoGame from "@/components/games/ItoGame";
+import {
+  Alert,
+  Badge,
+  Button,
+  Card,
+  Heading,
+  PlayerChip,
+  Spinner,
+  Text,
+} from "@/components/ui";
+import { cn } from "@/lib/utils/cn";
 
 interface GamePageProps {
   params: Promise<{
@@ -74,8 +85,8 @@ export default function GamePage({ params }: GamePageProps) {
   // Loading state
   if (roomLoading || playersLoading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900 flex items-center justify-center">
-        <div className="text-white text-xl">กำลังโหลด...</div>
+      <div className="flex min-h-screen items-center justify-center bg-bg text-fg">
+        <Spinner size="lg" />
       </div>
     );
   }
@@ -83,16 +94,16 @@ export default function GamePage({ params }: GamePageProps) {
   // Error state
   if (roomError || playersError || !room) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900 flex items-center justify-center p-4">
-        <div className="bg-white/10 backdrop-blur-lg rounded-3xl shadow-2xl p-8 max-w-md w-full text-center">
-          <h1 className="text-2xl font-bold text-white mb-4">เกิดข้อผิดพลาด</h1>
-          <p className="text-red-300 mb-6">
+      <div className="flex min-h-screen items-center justify-center bg-bg p-4 text-fg">
+        <Card padding="lg" className="w-full max-w-md text-center">
+          <Heading level="h2" className="mb-4">
+            เกิดข้อผิดพลาด
+          </Heading>
+          <Alert tone="danger" className="mb-6">
             {roomError || playersError || "ไม่พบห้อง"}
-          </p>
-          <Link href="/" className="text-blue-300 hover:text-blue-200">
-            กลับหน้าหลัก
-          </Link>
-        </div>
+          </Alert>
+          <Button href="/">กลับหน้าหลัก</Button>
+        </Card>
       </div>
     );
   }
@@ -101,23 +112,23 @@ export default function GamePage({ params }: GamePageProps) {
   // const currentPlayer = players.find(p => p.id === playerId);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900 p-3 md:p-4">
-      <div className="max-w-6xl mx-auto py-3 md:py-8">
+    <div className="min-h-screen bg-bg p-3 text-fg md:p-4">
+      <div className="mx-auto max-w-6xl py-3 md:py-8">
         {/* Combined Game Header + Players List */}
-        <div className="bg-white/10 backdrop-blur-lg rounded-2xl md:rounded-3xl shadow-2xl p-4 md:p-8 mb-3 md:mb-6 border border-white/20">
+        <Card padding="md" className="mb-3 md:mb-6">
           {/* Game Header Section */}
-          <div className="bg-gradient-to-br from-blue-500/20 to-purple-500/20 rounded-xl md:rounded-2xl p-4 md:p-6 mb-4 md:mb-6 border border-blue-400/30">
-            <div className="flex flex-row items-center justify-between gap-3 md:gap-4">
+          <Card variant="muted" padding="sm" className="mb-4 md:mb-6">
+            <div className="flex flex-row flex-wrap items-center justify-between gap-3 md:gap-4">
               {/* Game Name */}
-              <div className="flex-1 min-w-0">
-                <h1 className="text-xl md:text-3xl font-bold text-white">
+              <div className="min-w-0 flex-1">
+                <Heading level="h2" as="h1">
                   {selectedGame?.name || room.gameType || "เกม"}
-                </h1>
+                </Heading>
                 <div className="flex flex-row items-center gap-2">
-                  <p className="text-xs md:text-base text-blue-200">
+                  <Text variant="small" tone="muted" as="span">
                     รหัสห้อง:
-                  </p>
-                  <span className="font-bold text-yellow-200 text-base md:text-lg tracking-wider">
+                  </Text>
+                  <span className="text-h3 font-bold tracking-wider text-fg">
                     {room.code.slice(0, 3)}-{room.code.slice(3)}
                   </span>
                 </div>
@@ -126,96 +137,56 @@ export default function GamePage({ params }: GamePageProps) {
               {/* Right Side: Status + Home Button */}
               <div className="flex items-center gap-2 md:gap-3">
                 {/* Status Badge */}
-                <div className="bg-green-500/30 border-green-400/50 rounded-xl px-3 md:px-4 py-2 border backdrop-blur-sm">
-                  <div className="text-xs md:text-sm text-white/80 font-semibold text-center whitespace-nowrap flex items-center gap-2">
-                    <span className="w-2 h-2 rounded-full bg-green-400 animate-pulse block" />
-                    กำลังเล่น
-                  </div>
-                </div>
+                <Badge tone="success">
+                  <span className="block h-2 w-2 animate-pulse rounded-full border border-ink bg-success" />
+                  กำลังเล่น
+                </Badge>
 
                 {/* Home Button */}
-                <Link
-                  href="/"
-                  className="group bg-white/10 hover:bg-white/20 border border-white/20 hover:border-white/30 rounded-xl px-3 md:px-4 py-2 backdrop-blur-sm transition-all duration-200"
-                >
-                  <div className="flex items-center gap-2">
-                    <svg className="w-4 h-4 md:w-5 md:h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
-                    </svg>
-                    <span className="text-xs md:text-sm text-white font-semibold hidden sm:inline">
-                      กลับหน้าหลัก
-                    </span>
-                  </div>
-                </Link>
+                <Button href="/" variant="outline" size="sm" aria-label="กลับหน้าหลัก" icon={<LuHouse aria-hidden />}>
+                  <span className="hidden sm:inline">กลับหน้าหลัก</span>
+                </Button>
               </div>
             </div>
-          </div>
+          </Card>
 
           {/* Players Section */}
           <div className="mb-3">
-            <div className="flex items-center justify-between mb-2">
-              <h2 className="text-base md:text-xl font-bold text-white">
+            <div className="mb-2 flex items-center justify-between">
+              <Heading level="h3" as="h2">
                 ผู้เล่นทั้งหมด
-              </h2>
-              <span className="text-sm md:text-base text-white/70 font-semibold">
+              </Heading>
+              <Text variant="small" tone="muted" as="span" className="font-semibold">
                 {players.length}
-                {selectedGame && (
-                  <span className="text-xs md:text-base">
-                    /{selectedGame.maxPlayer}
-                  </span>
-                )}{" "}
-                คน
-              </span>
+                {selectedGame && <span>/{selectedGame.maxPlayer}</span>} คน
+              </Text>
             </div>
 
             <div className="flex flex-wrap gap-2">
               {players.map((player, index) => (
-                <div
+                <PlayerChip
                   key={player.id}
-                  className={`bg-white/5 rounded-lg px-3 py-2 border transition-all hover:bg-white/10 ${
-                    player.id === playerId
-                      ? "border-yellow-400/50 bg-yellow-500/10"
-                      : "border-white/10"
-                  } animate-fadeIn`}
-                  style={{ animationDelay: `${index * 0.1}s` }}
-                >
-                  <div className="flex items-center gap-2">
-                    {/* Player Number */}
-                    <div className="text-base font-bold text-white/40">
-                      #{index + 1}
-                    </div>
-
-                    {/* Player Name */}
-                    <div className="text-sm font-bold text-white">
-                      {player.name}
-                    </div>
-
-                    {/* Badges */}
-                    {player.isHost && (
-                      <span className="bg-yellow-500/30 text-yellow-200 px-1.5 py-0.5 rounded text-xs font-semibold">
-                        Host
-                      </span>
-                    )}
-                    {player.id === playerId && (
-                      <span className="bg-blue-500/30 text-blue-200 px-1.5 py-0.5 rounded text-xs font-semibold">
-                        คุณ
-                      </span>
-                    )}
-
-                    {/* Online Status */}
-                    <div className="flex-shrink-0">
-                      {player.isOnline ? (
-                        <div className="w-2 h-2 rounded-full bg-green-400" title="Online" />
-                      ) : (
-                        <div className="w-2 h-2 rounded-full bg-gray-500" title="Offline" />
-                      )}
-                    </div>
-                  </div>
-                </div>
+                  name={player.name}
+                  colorIndex={index}
+                  isHost={player.isHost}
+                  className="animate-fade-in"
+                  status={
+                    <>
+                      {player.id === playerId && <Badge tone="secondary">คุณ</Badge>}
+                      <span
+                        className={cn(
+                          "block h-2.5 w-2.5 shrink-0 rounded-full border border-ink",
+                          player.isOnline ? "bg-success" : "bg-surface-muted",
+                        )}
+                        title={player.isOnline ? "Online" : "Offline"}
+                      />
+                    </>
+                  }
+                />
               ))}
             </div>
           </div>
-        </div>
+        </Card>
 
         {/* Game Content */}
         {room.gameId === "BWLxJkh45e6RiALRBmcl" &&
@@ -223,32 +194,16 @@ export default function GamePage({ params }: GamePageProps) {
         room.gameSessionId ? (
           <ItoGame sessionId={room.gameSessionId} playerId={playerId} />
         ) : (
-          <div className="bg-white/10 backdrop-blur-lg rounded-3xl shadow-2xl p-8 mt-6 border border-white/20">
-            <div className="text-center text-white/50">
-              <p className="text-xl mb-4">🎮 Game Content</p>
-              <p className="text-sm">เกมนี้ยังไม่รองรับ</p>
-            </div>
-          </div>
+          <Card padding="lg" className="mt-6 text-center">
+            <Text variant="body" tone="muted" className="mb-4">
+              🎮 Game Content
+            </Text>
+            <Text variant="small" tone="muted">
+              เกมนี้ยังไม่รองรับ
+            </Text>
+          </Card>
         )}
       </div>
-
-      <style jsx>{`
-        @keyframes fadeIn {
-          from {
-            opacity: 0;
-            transform: translateY(10px);
-          }
-          to {
-            opacity: 1;
-            transform: translateY(0);
-          }
-        }
-
-        .animate-fadeIn {
-          animation: fadeIn 0.3s ease-out forwards;
-          opacity: 0;
-        }
-      `}</style>
     </div>
   );
 }

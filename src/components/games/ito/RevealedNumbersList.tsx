@@ -5,6 +5,8 @@
 
 "use client";
 
+import { Card, Heading } from "@/components/ui";
+
 interface RevealedNumbersListProps {
   revealedNumbers: number[];
 }
@@ -15,20 +17,22 @@ export default function RevealedNumbersList({
   if (revealedNumbers.length === 0) return null;
 
   return (
-    <div className="bg-gradient-to-r from-green-500/20 to-blue-500/20 rounded-xl p-3 md:p-4 mb-4 md:mb-6 border border-green-400/30">
-      <h4 className="text-white font-bold mb-2 md:mb-3 text-center text-sm md:text-base">
+    <Card variant="muted" padding="sm" className="mb-4 md:mb-6">
+      <Heading level="h3" as="h4" className="mb-2 text-center md:mb-3">
         ตัวเลขที่เปิดแล้ว
-      </h4>
+      </Heading>
       <div className="flex flex-wrap justify-center gap-2">
         {revealedNumbers.map((num, i) => (
-          <div
+          <span
             key={i}
-            className="bg-white/20 px-3 md:px-4 py-1.5 md:py-2 rounded-lg text-lg md:text-xl font-bold text-white"
+            className="inline-flex flex-col items-center rounded-md border-2 border-ink bg-surface px-3 py-2 shadow-brutal-sm"
           >
-            {num}
-          </div>
+            <span className="font-number text-h2 font-bold tabular-nums text-fg">
+              {num}
+            </span>
+          </span>
         ))}
       </div>
-    </div>
+    </Card>
   );
 }

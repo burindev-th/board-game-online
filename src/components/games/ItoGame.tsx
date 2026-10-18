@@ -19,6 +19,7 @@ import {
 } from "@/lib/firebase/ito";
 
 // Components
+import { Spinner } from "@/components/ui";
 import GameHeader from "./ito/GameHeader";
 import MyNumbersDisplay from "./ito/MyNumbersDisplay";
 import WritingPhase from "./ito/phases/WritingPhase";
@@ -434,8 +435,9 @@ export default function ItoGame({ sessionId, playerId }: ItoGameProps) {
   // Loading state
   if (loading || !gameState) {
     return (
-      <div className="text-center text-white">
-        <p className="text-xl">กำลังโหลดเกม...</p>
+      <div className="flex flex-col items-center gap-3 text-center text-fg">
+        <Spinner size="lg" />
+        <p className="text-h3">กำลังโหลดเกม...</p>
       </div>
     );
   }
