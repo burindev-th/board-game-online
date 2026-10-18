@@ -47,3 +47,13 @@ test("reports 1-based line numbers", () => {
   assert.equal(v.line, 2);
   assert.equal(v.match, "text-xs");
 });
+
+test("flags emoji in markup", () => {
+  assert.deepEqual(rules('<span>❤️</span>'), ["emoji"]);
+  assert.deepEqual(rules("<Badge>✅ ok</Badge>"), ["emoji"]);
+});
+
+test("ignores emoji in comments and console lines", () => {
+  assert.deepEqual(rules("// 🎉 comment"), []);
+  assert.deepEqual(rules('console.log("🗑️ x")'), []);
+});

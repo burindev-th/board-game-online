@@ -13,3 +13,4 @@ export { Select } from "./Select";
 export { Textarea } from "./Textarea";
 export { Modal } from "./Modal";
 export { PageShell } from "./PageShell";
+export { Hearts } from "./Hearts";

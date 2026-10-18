@@ -7,7 +7,7 @@
 
 import { useState, useEffect } from "react";
 import { LuClock } from "react-icons/lu";
-import { Badge, Card } from "@/components/ui";
+import { Badge, Card, Hearts } from "@/components/ui";
 import { ThemeToggle } from "@/components/theme";
 import { cn } from "@/lib/utils/cn";
 
@@ -62,18 +62,7 @@ export default function GameHeader({
   const minutes = timeLeft ? Math.floor(timeLeft / 60) : 0;
   const seconds = timeLeft ? timeLeft % 60 : 0;
 
-  const hearts3 = Array.from({ length: 3 }).map((_, i) => (
-    <span
-      key={i}
-      className={cn(
-        "transition-all duration-300 ease-in-out",
-        isScrolled ? "text-h3" : "text-h2",
-        i < currentHearts ? "opacity-100" : "opacity-30",
-      )}
-    >
-      ❤️
-    </span>
-  ));
+  const hearts3 = <Hearts total={3} remaining={currentHearts} size={isScrolled ? "md" : "lg"} />;
 
   const showTimer = phase !== "finished" && phaseEndTime && timeLeft !== undefined;
   const timerText = `${minutes}:${seconds.toString().padStart(2, "0")}`;

@@ -4,7 +4,7 @@
  */
 
 "use client";
-import { LuChevronRight, LuChevronDown } from "react-icons/lu";
+import { LuChevronRight, LuChevronDown, LuCheck, LuMessageCircle } from "react-icons/lu";
 import { useState } from "react";
 import RevealedNumbersList from "../RevealedNumbersList";
 import { Alert, Badge, Button, Card, Heading, Text, Textarea } from "@/components/ui";
@@ -194,7 +194,7 @@ export default function WritingPhase({
           variant="outline"
           size="sm"
           onClick={() => setShowStatus(!showStatus)}
-          icon={<span>💭</span>}
+          icon={<LuMessageCircle aria-hidden />}
         >
           <span>
             สถานะการส่งคำใบ้: {totalHintsSubmitted}/{totalHintsExpected}
@@ -206,7 +206,7 @@ export default function WritingPhase({
           <div className="mt-3 flex flex-wrap gap-2">
             {playersCompleted.map((p, i) => (
               <Badge key={i} tone="success">
-                ✓ {p.playerName}
+                <LuCheck className="h-3.5 w-3.5" aria-hidden /> {p.playerName}
               </Badge>
             ))}
             {playersNotCompleted.map(([id, p]) => (

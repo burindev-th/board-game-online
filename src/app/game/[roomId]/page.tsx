@@ -24,6 +24,7 @@ import {
   Text,
 } from "@/components/ui";
 import { cn } from "@/lib/utils/cn";
+import { LuGamepad2 } from "react-icons/lu";
 
 interface GamePageProps {
   params: Promise<{
@@ -196,7 +197,7 @@ export default function GamePage({ params }: GamePageProps) {
         ) : (
           <Card padding="lg" className="mt-6 text-center">
             <Text variant="body" tone="muted" className="mb-4">
-              🎮 Game Content
+              <LuGamepad2 className="mx-auto h-8 w-8" aria-hidden />
             </Text>
             <Text variant="small" tone="muted">
               เกมนี้ยังไม่รองรับ

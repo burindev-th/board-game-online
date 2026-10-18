@@ -6,6 +6,7 @@
 "use client";
 
 import { useState } from "react";
+import { LuHourglass, LuMessageCircle, LuVote } from "react-icons/lu";
 import { Alert, Badge, Button, Card, Heading, Text, Textarea, cardClasses } from "@/components/ui";
 import { cn } from "@/lib/utils/cn";
 import RevealedNumbersList from "../RevealedNumbersList";
@@ -269,7 +270,10 @@ export default function VotingPhase({
         ) : (
           <Card variant="muted" padding="md" className="text-center">
             <Text tone="muted" as="div" className="mb-2">
-              ⏳ รอให้ทุกคนพิมพ์คำใบ้ครบก่อน
+              <span className="inline-flex items-center gap-1">
+                <LuHourglass className="h-4 w-4" aria-hidden />
+                รอให้ทุกคนพิมพ์คำใบ้ครบก่อน
+              </span>
             </Text>
             <Text variant="caption" tone="subtle" as="div">
               จึงจะสามารถโหวตได้
@@ -283,7 +287,7 @@ export default function VotingPhase({
             variant={statusTab === "hints" ? "primary" : "outline"}
             size="sm"
             onClick={() => setStatusTab("hints")}
-            icon={<span>💭</span>}
+            icon={<LuMessageCircle aria-hidden />}
           >
             คำใบ้: {totalHintsSubmitted}/{totalHintsExpected}
           </Button>
@@ -291,7 +295,7 @@ export default function VotingPhase({
             variant={statusTab === "votes" ? "primary" : "outline"}
             size="sm"
             onClick={() => setStatusTab("votes")}
-            icon={<span>🗳️</span>}
+            icon={<LuVote aria-hidden />}
           >
             โหวต: {voteCount}/{totalPlayers}
           </Button>

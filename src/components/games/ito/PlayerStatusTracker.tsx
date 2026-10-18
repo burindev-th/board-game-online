@@ -5,6 +5,7 @@
 
 "use client";
 
+import { LuCircleCheck, LuHourglass } from "react-icons/lu";
 import { Badge, Card, Heading, PlayerChip, Text } from "@/components/ui";
 
 interface PlayerStatus {
@@ -38,7 +39,7 @@ export default function PlayerStatusTracker({
         {/* ส่งครบแล้ว */}
         <div>
           <div className="mb-1 flex justify-center md:mb-2">
-            <Badge tone="success">✅ ส่งครบแล้ว</Badge>
+            <Badge tone="success"><LuCircleCheck className="h-4 w-4" aria-hidden /> ส่งครบแล้ว</Badge>
           </div>
           <div className="grid grid-cols-1 gap-2">
             {playersCompleted.map((p, i) => (
@@ -59,7 +60,7 @@ export default function PlayerStatusTracker({
         {/* ยังส่งไม่ครบ */}
         <div>
           <div className="mb-1 flex justify-center md:mb-2">
-            <Badge tone="warning">⏳ ยังส่งไม่ครบ</Badge>
+            <Badge tone="warning"><LuHourglass className="h-4 w-4" aria-hidden /> ยังส่งไม่ครบ</Badge>
           </div>
           <div className="grid grid-cols-1 gap-2">
             {playersNotCompleted.map(([id, p], i) => (

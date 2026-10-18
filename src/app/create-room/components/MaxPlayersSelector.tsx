@@ -30,7 +30,7 @@ export default function MaxPlayersSelector({
             คน
             {selectedGame.maxPlayer > 20 && (
               <Badge tone="warning" className="ml-2 whitespace-normal">
-                (⚠️ จำนวนผู้เล่นสูงมาก โปรดตรวจสอบข้อมูลเกม)
+                จำนวนผู้เล่นสูงมาก โปรดตรวจสอบข้อมูลเกม
               </Badge>
             )}
           </>

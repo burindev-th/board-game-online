@@ -7,12 +7,12 @@ import { saveAgeToFirebase } from '@/lib/firebase/age';
 import { Alert, Button, Heading, Modal, Text } from '@/components/ui';
 
 const AGE_RANGES = [
-  { label: 'ต่ำกว่า 18 ปี', value: '0-17', emoji: '👶' },
-  { label: '18-24 ปี', value: '18-24', emoji: '🎓' },
-  { label: '25-34 ปี', value: '25-34', emoji: '💼' },
-  { label: '35-44 ปี', value: '35-44', emoji: '👔' },
-  { label: '45-54 ปี', value: '45-54', emoji: '🎯' },
-  { label: '55 ปีขึ้นไป', value: '55+', emoji: '🌟' },
+  { label: 'ต่ำกว่า 18 ปี', value: '0-17' },
+  { label: '18-24 ปี', value: '18-24' },
+  { label: '25-34 ปี', value: '25-34' },
+  { label: '35-44 ปี', value: '35-44' },
+  { label: '45-54 ปี', value: '45-54' },
+  { label: '55 ปีขึ้นไป', value: '55+' },
 ];
 
 export default function AgeModal() {
@@ -93,9 +93,9 @@ export default function AgeModal() {
             fullWidth
             disabled={isSubmitting}
             onClick={() => handleSelectRange(range.value)}
-            className="justify-start"
+            className="justify-center"
           >
-            {range.emoji} {range.label}
+            {range.label}
           </Button>
         ))}
       </div>

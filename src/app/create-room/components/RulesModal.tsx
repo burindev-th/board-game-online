@@ -1,5 +1,6 @@
 'use client';
 
+import { LuClipboardList, LuTarget, LuLightbulb, LuTriangleAlert, LuGamepad2, LuSparkles } from 'react-icons/lu';
 import { Badge, Button, Card, Heading, Modal } from '@/components/ui';
 
 interface RulesModalProps {
@@ -31,7 +32,7 @@ export default function RulesModal({ isOpen, onClose, gameName }: RulesModalProp
     >
       <div className="space-y-4 text-fg">
         <Card variant="muted" padding="sm">
-          <Heading level="h3" className="mb-2">📋 วิธีเล่น</Heading>
+          <Heading level="h3" className="mb-2 flex items-center gap-2"><LuClipboardList className="h-5 w-5" aria-hidden />วิธีเล่น</Heading>
           <ul className="list-inside list-disc space-y-2 text-small md:text-body">
             <li>ผู้เล่นแต่ละคนจะได้รับตัวเลขระหว่าง <strong>1-100</strong></li>
             <li>ผู้เล่นจะต้องเรียงตัวเลขจาก <strong>น้อยไปมาก</strong> โดยไม่บอกตัวเลขโดยตรง</li>
@@ -40,7 +41,7 @@ export default function RulesModal({ isOpen, onClose, gameName }: RulesModalProp
         </Card>
 
         <Card variant="muted" padding="sm">
-          <Heading level="h3" className="mb-2">🎯 เป้าหมาย</Heading>
+          <Heading level="h3" className="mb-2 flex items-center gap-2"><LuTarget className="h-5 w-5" aria-hidden />เป้าหมาย</Heading>
           <p className="text-small md:text-body">
             ผู้เล่นทุกคนต้องร่วมมือกันเพื่อเรียงลำดับให้ถูกต้อง <strong>ตามจำนวนด่านที่กำหนด</strong>
             เพื่อชนะเกม หากเรียงผิดเกินจำนวนครั้งที่กำหนด ผู้เล่นจะแพ้
@@ -48,7 +49,7 @@ export default function RulesModal({ isOpen, onClose, gameName }: RulesModalProp
         </Card>
 
         <Card variant="muted" padding="sm">
-          <Heading level="h3" className="mb-2">💡 ตัวอย่างการสื่อสาร</Heading>
+          <Heading level="h3" className="mb-2 flex items-center gap-2"><LuLightbulb className="h-5 w-5" aria-hidden />ตัวอย่างการสื่อสาร</Heading>
           <div className="space-y-2 text-small md:text-body">
             <p><strong>โจทย์:</strong> &quot;ความสูงของต้นไม้ที่คุณชอบ&quot;</p>
             <ul className="ml-4 list-inside list-disc space-y-1">
@@ -60,7 +61,7 @@ export default function RulesModal({ isOpen, onClose, gameName }: RulesModalProp
         </Card>
 
         <Card variant="muted" padding="sm">
-          <Heading level="h3" className="mb-2">⚠️ กฎสำคัญ</Heading>
+          <Heading level="h3" className="mb-2 flex items-center gap-2"><LuTriangleAlert className="h-5 w-5" aria-hidden />กฎสำคัญ</Heading>
           <ul className="list-inside list-disc space-y-2 text-small md:text-body">
             <li><Badge tone="danger">ห้าม</Badge> บอกตัวเลขโดยตรง เช่น &quot;50&quot;</li>
             <li><Badge tone="danger">ห้าม</Badge> ใช้คำที่มีตัวเลข เช่น &quot;ห้าสิบ&quot;</li>
@@ -70,7 +71,7 @@ export default function RulesModal({ isOpen, onClose, gameName }: RulesModalProp
         </Card>
 
         <Card variant="muted" padding="sm">
-          <Heading level="h3" className="mb-2">🎮 การเล่นในระบบนี้</Heading>
+          <Heading level="h3" className="mb-2 flex items-center gap-2"><LuGamepad2 className="h-5 w-5" aria-hidden />การเล่นในระบบนี้</Heading>
           <ol className="space-y-2 text-small md:text-body">
             {SYSTEM_STEPS.map((step, index) => (
               <li key={step} className="flex items-start gap-2">
@@ -90,7 +91,7 @@ export default function RulesModal({ isOpen, onClose, gameName }: RulesModalProp
         </Card>
 
         <Card variant="primary" padding="sm">
-          <Heading level="h3" className="mb-2 text-primary-on">✨ เคล็ดลับการเล่นให้สนุก</Heading>
+          <Heading level="h3" className="mb-2 text-primary-on flex items-center gap-2"><LuSparkles className="h-5 w-5" aria-hidden />เคล็ดลับการเล่นให้สนุก</Heading>
           <ul className="list-inside list-disc space-y-2 text-small md:text-body">
             <li>ใช้จินตนาการและความคิดสร้างสรรค์ในการบรรยาย</li>
             <li>ถามคำถามซึ่งกันและกันเพื่อเปรียบเทียบ</li>

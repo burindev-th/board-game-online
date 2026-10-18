@@ -5,8 +5,8 @@
 
 "use client";
 
-import { Badge, Button, Card, Heading, Text } from "@/components/ui";
-import { cn } from "@/lib/utils/cn";
+import { LuCheck, LuCircleCheck, LuCircleX, LuHeartCrack, LuTrophy, LuX } from "react-icons/lu";
+import { Badge, Button, Card, Heading, Hearts, Text } from "@/components/ui";
 
 type ItoPlayerAnswer = {
   playerId: string;
@@ -37,7 +37,7 @@ export default function FinishedPhase({
     <Card padding="lg" className="text-center">
       {gameState.status === "won" ? (
         <>
-          <div className="mb-4 animate-bounce text-display md:mb-6 md:text-display-lg">🎉</div>
+          <div className="mx-auto mb-4 inline-flex h-20 w-20 items-center justify-center rounded-lg border-2 border-ink bg-primary text-primary-on shadow-brutal md:mb-6"><LuTrophy className="h-10 w-10" aria-hidden /></div>
           <Heading as="h3" level="h1" className="mb-3 text-center md:mb-4">
             ชนะแล้ว!
           </Heading>
@@ -47,7 +47,7 @@ export default function FinishedPhase({
         </>
       ) : (
         <>
-          <div className="mb-4 text-display md:mb-6 md:text-display-lg">💔</div>
+          <div className="mx-auto mb-4 inline-flex h-20 w-20 items-center justify-center rounded-lg border-2 border-ink bg-danger text-on-status shadow-brutal md:mb-6"><LuHeartCrack className="h-10 w-10" aria-hidden /></div>
           <Heading as="h3" level="h1" className="mb-3 text-center md:mb-4">
             แพ้แล้ว
           </Heading>
@@ -68,18 +68,8 @@ export default function FinishedPhase({
           <Text variant="small" tone="muted" className="mb-2">
             หัวใจคงเหลือ:
           </Text>
-          <div className="mb-2 flex justify-center gap-1.5 md:gap-2">
-            {Array.from({ length: 3 }).map((_, i) => (
-              <div
-                key={i}
-                className={cn(
-                  "text-h1",
-                  i >= finalHearts && "opacity-30 grayscale"
-                )}
-              >
-                ❤️
-              </div>
-            ))}
+          <div className="mb-2 flex justify-center">
+            <Hearts total={3} remaining={finalHearts} size="lg" />
           </div>
           <Badge tone="danger">{finalHearts} / 3</Badge>
         </div>
@@ -97,9 +87,9 @@ export default function FinishedPhase({
         {/* Result */}
         <div className="border-t-2 border-ink pt-4 md:pt-6">
           {gameState.status === "won" ? (
-            <Badge tone="success">✅ ชนะ</Badge>
+            <Badge tone="success"><LuCircleCheck className="h-4 w-4" aria-hidden /> ชนะ</Badge>
           ) : (
-            <Badge tone="danger">❌ แพ้</Badge>
+            <Badge tone="danger"><LuCircleX className="h-4 w-4" aria-hidden /> แพ้</Badge>
           )}
         </div>
       </Card>
@@ -133,10 +123,10 @@ export default function FinishedPhase({
                   </div>
                 </div>
                 {ans.isCorrect === true && (
-                  <Badge tone="success" className="shrink-0">✓</Badge>
+                  <Badge tone="success" className="shrink-0"><LuCheck className="h-4 w-4" aria-label="ถูก" /></Badge>
                 )}
                 {ans.isCorrect === false && (
-                  <Badge tone="danger" className="shrink-0">✗</Badge>
+                  <Badge tone="danger" className="shrink-0"><LuX className="h-4 w-4" aria-label="ผิด" /></Badge>
                 )}
               </div>
             ))}

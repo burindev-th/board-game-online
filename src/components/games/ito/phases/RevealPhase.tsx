@@ -6,6 +6,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { LuHeart, LuZap } from "react-icons/lu";
 import { Alert, Badge, Card, Modal, Text } from "@/components/ui";
 
 type ItoPlayerAnswer = {
@@ -113,7 +114,7 @@ export default function RevealPhase({
                 </div>
               </div>
               <Text variant="caption" tone="muted" className="mt-1 text-right">
-                -❤️ {heartsLost} ดวง
+                -<LuHeart className="inline h-4 w-4 fill-danger text-ink align-[-0.15em]" aria-hidden /> {heartsLost} ดวง
               </Text>
             </div>
           )}
@@ -121,7 +122,10 @@ export default function RevealPhase({
           {/* Auto-reveal indicator */}
           {isAutoRevealed && (
             <Text variant="caption" tone="subtle" className="mt-2 border-t-2 border-ink pt-2 text-center">
-              ⚡ เปิดเลขสุดท้ายอัตโนมัติ
+              <span className="inline-flex items-center gap-1">
+                <LuZap className="h-4 w-4" aria-hidden />
+                เปิดเลขสุดท้ายอัตโนมัติ
+              </span>
             </Text>
           )}
         </Card>

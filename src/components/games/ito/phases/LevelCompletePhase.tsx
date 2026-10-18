@@ -6,8 +6,8 @@
 "use client";
 
 import { markPlayerReady } from "@/lib/firebase/ito";
-import { Badge, Button, Card, Heading, PlayerChip, Text } from "@/components/ui";
-import { cn } from "@/lib/utils/cn";
+import { LuCheck, LuCircleCheck, LuHourglass, LuPartyPopper, LuX } from "react-icons/lu";
+import { Badge, Button, Card, Heading, Hearts, PlayerChip, Text } from "@/components/ui";
 
 type ItoPlayerAnswer = {
   playerId: string;
@@ -91,7 +91,7 @@ export default function LevelCompletePhase({
   return (
     <Card padding="lg">
       <div className="mb-6 text-center md:mb-8">
-        <div className="mb-4 text-display md:mb-6 md:text-display-lg">🎊</div>
+        <div className="mx-auto mb-4 inline-flex h-20 w-20 items-center justify-center rounded-lg border-2 border-ink bg-primary text-primary-on shadow-brutal md:mb-6"><LuPartyPopper className="h-10 w-10" aria-hidden /></div>
         <Heading as="h3" level="h1" className="mb-3 text-center md:mb-4">
           ผ่านรอบที่ {gameState.currentLevel}!
         </Heading>
@@ -128,10 +128,10 @@ export default function LevelCompletePhase({
                 </div>
               </div>
               {ans.isCorrect === true && (
-                <Badge tone="success" className="shrink-0">✓</Badge>
+                <Badge tone="success" className="shrink-0"><LuCheck className="h-4 w-4" aria-label="ถูก" /></Badge>
               )}
               {ans.isCorrect === false && (
-                <Badge tone="danger" className="shrink-0">✗</Badge>
+                <Badge tone="danger" className="shrink-0"><LuX className="h-4 w-4" aria-label="ผิด" /></Badge>
               )}
             </div>
           ))}
@@ -177,18 +177,8 @@ export default function LevelCompletePhase({
             <Text variant="caption" tone="muted" as="div" className="mb-1 text-center">
               หัวใจคงเหลือ
             </Text>
-            <div className="flex justify-center gap-0.5 md:gap-1">
-              {Array.from({ length: 3 }).map((_, i) => (
-                <div
-                  key={i}
-                  className={cn(
-                    "text-h2",
-                    i >= gameState.hearts && "opacity-30 grayscale"
-                  )}
-                >
-                  ❤️
-                </div>
-              ))}
+            <div className="flex justify-center">
+              <Hearts total={3} remaining={gameState.hearts} size="md" />
             </div>
             <div className="mt-1 flex justify-center">
               <Badge tone="danger">{gameState.hearts} / 3</Badge>
@@ -218,7 +208,7 @@ export default function LevelCompletePhase({
           {/* พร้อมแล้ว */}
           <div>
             <div className="mb-1 flex justify-center md:mb-2">
-              <Badge tone="success">✅ พร้อมแล้ว</Badge>
+              <Badge tone="success"><LuCircleCheck className="h-4 w-4" aria-hidden /> พร้อมแล้ว</Badge>
             </div>
             <div className="grid gap-2">
               {readyPlayers.map((r) => (
@@ -234,7 +224,7 @@ export default function LevelCompletePhase({
           {/* รออยู่ */}
           <div>
             <div className="mb-1 flex justify-center md:mb-2">
-              <Badge tone="warning">⏳ รออยู่</Badge>
+              <Badge tone="warning"><LuHourglass className="h-4 w-4" aria-hidden /> รออยู่</Badge>
             </div>
             <div className="grid gap-2">
               {notReadyPlayers.map((id) => (
@@ -267,7 +257,7 @@ export default function LevelCompletePhase({
       ) : (
         <div className="py-3 text-center md:py-4">
           <div className="mb-2 flex justify-center">
-            <Badge tone="success">✓ คุณพร้อมแล้ว</Badge>
+            <Badge tone="success"><LuCheck className="h-4 w-4" aria-hidden /> คุณพร้อมแล้ว</Badge>
           </div>
           <Text variant="small" tone="muted">
             รอผู้เล่นคนอื่น...

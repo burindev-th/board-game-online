@@ -26,12 +26,17 @@ export const RULES = [
   { name: "radius", pattern: /(?<![\w-])rounded(?:-[trblse]{1,2})?-(?:xl|2xl|3xl)(?![\w-])/g },
   { name: "blur-shadow", pattern: /(?<![\w-])shadow(?:-(?:sm|md|lg|xl|2xl|inner))?(?![\w-])/g },
   { name: "type-scale", pattern: /(?<![\w-])text-(?:xs|sm|base|lg|[2-9]?xl)(?![\w-])/g },
+  { name: "emoji", pattern: /[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}\u{2B50}\u{231A}-\u{23FF}\u{2713}\u{2717}]/gu },
 ];
 
 export function findViolations(source) {
   const violations = [];
   source.split("\n").forEach((text, i) => {
+    const trimmed = text.trim();
+    const isCommentOrLog =
+      trimmed.startsWith("//") || trimmed.startsWith("*") || trimmed.startsWith("/*") || text.includes("console.");
     for (const rule of RULES) {
+      if (rule.name === "emoji" && isCommentOrLog) continue;
       for (const m of text.matchAll(rule.pattern)) {
         violations.push({ rule: rule.name, match: m[0], line: i + 1 });
       }
