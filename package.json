@@ -6,7 +6,9 @@
     "dev": "next dev --turbopack",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "check:theme": "node scripts/check-theme.mjs",
+    "test:theme": "node --test scripts/check-theme.test.mjs"
   },
   "dependencies": {
     "bootstrap": "^5.3.8",
