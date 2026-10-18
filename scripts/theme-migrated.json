@@ -1,1 +1,1 @@
-["src/components/ui","src/components/theme","src/app/dev","src/app/page.tsx","src/components/AgeModal.tsx","src/components/FeedbackModal.tsx","src/app/create-room/components/RulesModal.tsx","src/app/create-room","src/app/join-room"]
+["src/components/ui","src/components/theme","src/app/dev","src/app/page.tsx","src/components/AgeModal.tsx","src/components/FeedbackModal.tsx","src/app/create-room/components/RulesModal.tsx","src/app/create-room","src/app/join-room","src/app/lobby"]

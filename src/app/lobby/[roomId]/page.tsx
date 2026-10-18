@@ -1,12 +1,25 @@
 "use client";
 
 import { use, useEffect, useState } from "react";
-import { LuPencil , LuCheck , LuX} from "react-icons/lu";
+import { LuPencil, LuCheck, LuX, LuCopy } from "react-icons/lu";
 import { useRouter } from "next/navigation";
-import Link from "next/link";
 import { useRoom } from "@/lib/hooks/useRoom";
 import { usePlayers } from "@/lib/hooks/usePlayers";
 import { useGames } from "@/lib/hooks/useGames";
+import {
+  Alert,
+  Badge,
+  Button,
+  Card,
+  Heading,
+  IconButton,
+  PageShell,
+  PlayerChip,
+  Spinner,
+  Text,
+  Input,
+} from "@/components/ui";
+import { cn } from "@/lib/utils/cn";
 import { kickPlayer, toggleReady, leaveRoom } from "@/lib/firebase/firestore";
 
 interface LobbyPageProps {
@@ -280,319 +293,225 @@ export default function LobbyPage({ params }: LobbyPageProps) {
   // Loading state
   if (roomLoading || playersLoading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900 flex items-center justify-center">
-        <div className="text-white text-xl">กำลังโหลด...</div>
-      </div>
+      <PageShell width="md">
+        <div className="flex justify-center py-16">
+          <Spinner size="lg" />
+        </div>
+      </PageShell>
     );
   }
 
   // Error state
   if (roomError || playersError || !room) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900 flex items-center justify-center p-4">
-        <div className="bg-white/10 backdrop-blur-lg rounded-3xl shadow-2xl p-8 max-w-md w-full text-center">
-          <h1 className="text-2xl font-bold text-white mb-4">เกิดข้อผิดพลาด</h1>
-          <p className="text-red-300 mb-6">
+      <PageShell width="sm" backHref="/" backLabel="กลับหน้าหลัก">
+        <Card padding="lg" className="text-center">
+          <Heading level="h2" className="mb-4">
+            เกิดข้อผิดพลาด
+          </Heading>
+          <Alert tone="danger" className="mb-6 text-left">
             {roomError || playersError || "ไม่พบห้อง"}
-          </p>
-          <Link href="/" className="text-blue-300 hover:text-blue-200">
+          </Alert>
+          <Button href="/" variant="outline">
             กลับหน้าหลัก
-          </Link>
-        </div>
-      </div>
+          </Button>
+        </Card>
+      </PageShell>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900 p-4 flex items-center justify-center">
-      <div className="max-w-4xl w-full">
-        {/* Combined Header + Players Section */}
-        <div className="bg-white/10 backdrop-blur-lg rounded-3xl shadow-2xl p-4 md:p-8 mb-4 md:mb-6 border border-white/20">
-          {/* Game Name & Room Code Header */}
-          <div className="bg-gradient-to-br from-blue-500/20 to-purple-500/20 rounded-2xl md:rounded-3xl p-4 md:p-6 mb-4 md:mb-6 border border-blue-400/30">
-            <div className="flex flex-row items-center justify-between gap-3 md:gap-4">
-              {/* Game Name */}
-              <div className="text-left w-full md:w-auto">
-                <h1 className="text-xl md:text-3xl font-bold text-white mb-2">
-                  {selectedGame?.name || "เกม"}
-                </h1>
-                <div className="flex flex-col items-start ">
-                  <p className="text-xs md:text-base text-blue-200">
-                    รหัสห้อง:
-                  </p>
-                  <div className="flex items-center gap-2 justify-center">
-                    <span className="font-bold text-yellow-200 text-2xl  tracking-wider">
-                      {room.code.slice(0, 3)}-{room.code.slice(3)}
-                    </span>
-                    <button
-                      onClick={handleCopyCode}
-                      className="bg-white/20 hover:bg-white/30 active:scale-95 p-1.5 md:p-2 rounded-lg transition-all"
-                      title="คัดลอกรหัสห้อง"
-                    >
-                      {copied ? (
-                        <svg
-                          className="w-5 h-5 md:w-5 md:h-5 text-green-400"
-                          fill="none"
-                          stroke="currentColor"
-                          viewBox="0 0 24 24"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M5 13l4 4L19 7"
-                          />
-                        </svg>
-                      ) : (
-                        <svg
-                          className="w-5 h-5 md:w-5 md:h-5 text-white"
-                          fill="none"
-                          stroke="currentColor"
-                          viewBox="0 0 24 24"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"
-                          />
-                        </svg>
-                      )}
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </div>
+    <PageShell
+      width="md"
+      actions={
+        <Button
+          variant="danger"
+          size="sm"
+          onClick={handleLeaveRoom}
+          disabled={actionLoading}
+        >
+          {actionLoading ? "กำลังออก..." : "ออกจากห้อง"}
+        </Button>
+      }
+    >
+      <div className="space-y-4 md:space-y-6">
+        {/* Game Name & Room Code Header */}
+        <Card variant="primary" padding="md">
+          <h1 className="mb-2 font-heading text-h2 md:text-h2-lg font-bold">
+            {selectedGame?.name || "เกม"}
+          </h1>
+          <p className="text-small">รหัสห้อง:</p>
+          <div className="flex items-center gap-3">
+            <span className="font-number text-h1 md:text-h1-lg font-bold tracking-widest">
+              {room.code.slice(0, 3)}-{room.code.slice(3)}
+            </span>
+            <IconButton
+              variant="outline"
+              size="sm"
+              onClick={handleCopyCode}
+              label="คัดลอกรหัสห้อง"
+              icon={copied ? <LuCheck aria-hidden /> : <LuCopy aria-hidden />}
+            />
           </div>
+        </Card>
 
-          {/* Error Message */}
-          {actionError && (
-            <div className="bg-red-500/20 border border-red-500/50 rounded-xl p-3 mb-4">
-              <p className="text-red-200 text-xs md:text-sm font-semibold">
-                {actionError}
-              </p>
-            </div>
-          )}
+        {/* Error Message */}
+        {actionError && <Alert tone="danger">{actionError}</Alert>}
 
-          {/* Players Title */}
-          <div className="flex items-center justify-between mb-3 md:mb-4">
-            <h2 className="text-base md:text-xl font-bold text-white">
-              ผู้เล่นทั้งหมด
-            </h2>
+        {/* Players */}
+        <Card padding="md">
+          <div className="mb-3 flex flex-wrap items-center justify-between gap-2 md:mb-4">
+            <Heading level="h3">ผู้เล่นทั้งหมด</Heading>
 
             {/* Max Players - Editable by Host */}
             {isHost ? (
               <div className="flex items-center gap-2">
                 {editingMaxPlayers ? (
-                  <div className="flex items-center gap-2 bg-white/10 rounded-lg px-3 py-1.5 border border-white/20">
-                    <span className="text-white/70 text-sm">{room.currentPlayers}/</span>
-                    <input
+                  <div className="flex items-center gap-2 rounded-md border-2 border-ink bg-surface-muted px-3 py-1.5">
+                    <span className="text-small text-fg-muted">
+                      {room.currentPlayers}/
+                    </span>
+                    <Input
                       type="number"
+                      aria-label="จำนวนผู้เล่นสูงสุด"
                       min={room.currentPlayers}
                       max={selectedGame?.maxPlayer || 10}
                       value={newMaxPlayers}
                       onChange={(e) =>
                         setNewMaxPlayers(parseInt(e.target.value))
                       }
-                      className="w-12 bg-white/20 text-white text-center rounded px-1 py-0.5 text-sm font-semibold border border-white/30 focus:outline-none focus:border-blue-400 focus:ring-1 focus:ring-blue-400"
+                      className="h-9 w-16 px-2 text-center"
                     />
-                    <span className="text-white/70 text-sm">คน</span>
-                    <div className="flex gap-2 ml-1">
-                      <button
-                        onClick={handleUpdateMaxPlayers}
-                        disabled={
-                          actionLoading || newMaxPlayers < room.currentPlayers || newMaxPlayers > (selectedGame?.maxPlayer || 10)
-                        }
-                        className="p-1.5 rounded bg-green-500/30 hover:bg-green-500/50 text-green-300 hover:text-green-200 border border-green-500/40 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
-                        title="บันทึก"
-                      >
-                        <LuCheck className="w-4 h-4" />
-                      </button>
-                      <button
-                        onClick={() => setEditingMaxPlayers(false)}
-                        disabled={actionLoading}
-                        className="p-1.5 rounded bg-red-500/30 hover:bg-red-500/50 text-red-300 hover:text-red-200 border border-red-500/40 transition-all"
-                        title="ยกเลิก"
-                      >
-                        <LuX className="w-4 h-4" />
-                      </button>
-                    </div>
+                    <span className="text-small text-fg-muted">คน</span>
+                    <IconButton
+                      variant="primary"
+                      size="sm"
+                      onClick={handleUpdateMaxPlayers}
+                      disabled={
+                        actionLoading ||
+                        newMaxPlayers < room.currentPlayers ||
+                        newMaxPlayers > (selectedGame?.maxPlayer || 10)
+                      }
+                      label="บันทึก"
+                      icon={<LuCheck aria-hidden />}
+                    />
+                    <IconButton
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setEditingMaxPlayers(false)}
+                      disabled={actionLoading}
+                      label="ยกเลิก"
+                      icon={<LuX aria-hidden />}
+                    />
                   </div>
                 ) : (
-                  <div className="flex items-center gap-2 bg-white/5 hover:bg-white/10 rounded-lg px-3 py-1.5 transition-all">
-                    <span className="text-sm md:text-base text-white/70 font-semibold">
+                  <div className="flex items-center gap-2">
+                    <Badge>
                       {room.currentPlayers}/{room.maxPlayers} คน
-                    </span>
-                    <button
+                    </Badge>
+                    <IconButton
+                      variant="ghost"
+                      size="sm"
                       onClick={() => {
                         setNewMaxPlayers(room.maxPlayers);
                         setEditingMaxPlayers(true);
                       }}
-                      className="p-1 rounded hover:bg-white/20 text-white/60 hover:text-white transition-colors"
-                      title="แก้ไขจำนวนผู้เล่น"
-                    >
-                      <LuPencil className="w-3.5 h-3.5" />
-                    </button>
+                      label="แก้ไขจำนวนผู้เล่น"
+                      icon={<LuPencil aria-hidden />}
+                    />
                   </div>
                 )}
               </div>
             ) : (
-              <div className="bg-white/5 rounded-lg px-3 py-1.5">
-                <span className="text-sm md:text-base text-white/70 font-semibold">
-                  {room.currentPlayers}/{room.maxPlayers} คน
-                </span>
-              </div>
+              <Badge>
+                {room.currentPlayers}/{room.maxPlayers} คน
+              </Badge>
             )}
           </div>
 
           {/* Players List */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-2 md:gap-3">
+          <div className="grid grid-cols-1 gap-2 md:gap-3">
             {players.map((player, index) => (
-              <div
+              <PlayerChip
                 key={player.id}
-                className="bg-white/10 rounded-xl md:rounded-2xl p-3 md:p-4 transition-all hover:bg-white/20 animate-fadeIn border border-white/5"
-                style={{ animationDelay: `${index * 0.05}s` }}
-              >
-                {/* Mobile: Vertical Layout, Desktop: Horizontal Layout */}
-                <div className="flex flex-row md:items-center justify-between gap-2 md:gap-4">
-                  {/* Top Row (Mobile) / Left Side (Desktop): Number Badge + Name + Online Status */}
-                  <div className="flex items-center gap-2 md:gap-3 min-w-0">
-                    {/* Player Number Badge */}
-                    <div className="w-8 h-8 md:w-11 md:h-11 rounded-full bg-gradient-to-br from-purple-500/40 to-blue-500/40 flex items-center justify-center flex-shrink-0 border border-white/20">
-                      <span className="text-white font-bold text-sm md:text-lg">
-                        #{index + 1}
-                      </span>
-                    </div>
-
-                    {/* Player Name */}
-                    <span className="text-white font-semibold text-sm md:text-lg truncate flex-1">
-                      {player.name}
-                    </span>
-
-                    {/* Online Status (visible on mobile) */}
-                    <div
-                      className={`w-2 h-2 md:hidden rounded-full flex-shrink-0 ${
-                        player.isOnline
-                          ? "bg-green-400 shadow-[0_0_8px_rgba(74,222,128,0.6)]"
-                          : "bg-gray-500"
-                      }`}
+                name={player.name}
+                colorIndex={index}
+                isHost={player.isHost}
+                className="animate-fade-in"
+                status={
+                  <>
+                    {player.isReady && !player.isHost && (
+                      <Badge tone="success">พร้อม</Badge>
+                    )}
+                    {/* Online status */}
+                    <span
+                      role="img"
+                      aria-label={player.isOnline ? "ออนไลน์" : "ออฟไลน์"}
+                      className={cn(
+                        "h-3 w-3 shrink-0 rounded-full border-2 border-ink",
+                        player.isOnline ? "bg-success" : "bg-surface-muted",
+                      )}
                     />
-                  </div>
-
-                  {/* Bottom Row (Mobile) / Right Side (Desktop): Badges + Online Status + Kick Button */}
-                  <div className="flex items-center justify-between md:justify-end gap-2 md:gap-3">
-                    {/* Badges */}
-                    <div className="flex items-center gap-1.5 flex-wrap">
-                      {player.isHost && (
-                        <span className="bg-yellow-500/30 text-yellow-200 px-2 md:px-3 py-0.5 md:py-1 rounded-full text-xs md:text-sm font-semibold border border-yellow-400/30">
-                          Host
-                        </span>
-                      )}
-                      {player.isReady && !player.isHost && (
-                        <span className="bg-green-500/30 text-green-200 px-2 md:px-3 py-0.5 md:py-1 rounded-full text-xs md:text-sm font-semibold border border-green-400/30">
-                          พร้อม
-                        </span>
-                      )}
-                    </div>
-
-                    {/* Right Side Group: Online Status (desktop) + Kick Button */}
-                    <div className="flex items-center gap-2 md:gap-3">
-                      {/* Online Status (visible on desktop) */}
-                      <div
-                        className={`hidden md:block w-3 h-3 rounded-full flex-shrink-0 ${
-                          player.isOnline
-                            ? "bg-green-400 shadow-[0_0_8px_rgba(74,222,128,0.6)]"
-                            : "bg-gray-500"
-                        }`}
-                      />
-
-                      {/* Kick Button (Host only, can't kick themselves) */}
-                      {isHost && !player.isHost && (
-                        <button
-                          onClick={() => handleKick(player.id, player.name)}
-                          disabled={actionLoading}
-                          className="bg-gradient-to-r from-red-500/20 to-red-600/20 hover:from-red-500/30 hover:to-red-600/30 border border-red-500/40 text-red-300 hover:text-red-200 text-xs md:text-sm font-semibold transition-all disabled:opacity-50 disabled:cursor-not-allowed flex-shrink-0 px-2.5 md:px-4 py-1 md:py-2 rounded-lg shadow-sm hover:shadow-md active:scale-95"
-                        >
-                          เตะ
-                        </button>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              </div>
+                    {/* Kick Button (Host only, can't kick themselves) */}
+                    {isHost && !player.isHost && (
+                      <Button
+                        variant="danger"
+                        size="sm"
+                        onClick={() => handleKick(player.id, player.name)}
+                        disabled={actionLoading}
+                      >
+                        เตะ
+                      </Button>
+                    )}
+                  </>
+                }
+              />
             ))}
           </div>
-        </div>
+        </Card>
 
         {/* Action Section */}
-        <div className="bg-white/10 backdrop-blur-lg rounded-3xl shadow-2xl p-6 md:p-8 border border-white/20">
+        <Card padding="md">
           <div className="space-y-3 md:space-y-4">
             {isHost ? (
               // Host Actions
               <>
-                <button
+                <Button
+                  variant="primary"
+                  size="lg"
+                  fullWidth
                   onClick={handleStartGame}
                   disabled={!canStartGame || actionLoading}
-                  className="w-full bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 disabled:from-gray-500 disabled:to-gray-600 disabled:cursor-not-allowed text-white text-lg md:text-xl font-bold py-3 md:py-4 rounded-xl transition-all transform hover:scale-105 hover:shadow-2xl disabled:transform-none disabled:shadow-none"
                 >
                   {actionLoading ? "กำลังเริ่มเกม..." : "เริ่มเกม"}
-                </button>
+                </Button>
                 {!canStartGame && (
-                  <p className="text-center text-yellow-200 text-xs md:text-sm">
+                  <Text variant="small" tone="muted" className="text-center">
                     {room.currentPlayers < minPlayers
                       ? `ต้องมีผู้เล่นอย่างน้อย ${minPlayers} คน`
                       : "ผู้เล่นทุกคนต้องกดพร้อมก่อน"}
-                  </p>
+                  </Text>
                 )}
               </>
             ) : (
               // Player Actions
-              <button
+              <Button
+                variant={currentPlayer?.isReady ? "outline" : "primary"}
+                size="lg"
+                fullWidth
                 onClick={handleToggleReady}
                 disabled={actionLoading}
-                className={`w-full ${
-                  currentPlayer?.isReady
-                    ? "bg-gradient-to-r from-gray-500 to-gray-600 hover:from-gray-600 hover:to-gray-700"
-                    : "bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700"
-                } disabled:opacity-50 disabled:cursor-not-allowed text-white text-lg md:text-xl font-bold py-3 md:py-4 rounded-xl transition-all transform hover:scale-105 hover:shadow-2xl disabled:transform-none`}
               >
                 {actionLoading
                   ? "กำลังโหลด..."
                   : currentPlayer?.isReady
                   ? "ยกเลิกความพร้อม"
                   : "พร้อม"}
-              </button>
+              </Button>
             )}
-
-            {/* Leave Room Button */}
-            <button
-              onClick={handleLeaveRoom}
-              disabled={actionLoading}
-              className="w-full bg-red-500/20 hover:bg-red-500/30 border-2 border-red-500/50 text-red-200 text-base md:text-lg font-bold py-2.5 md:py-3 rounded-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {actionLoading ? "กำลังออก..." : "ออกจากห้อง"}
-            </button>
           </div>
-        </div>
+        </Card>
       </div>
-
-      <style jsx>{`
-        @keyframes fadeIn {
-          from {
-            opacity: 0;
-            transform: translateY(10px);
-          }
-          to {
-            opacity: 1;
-            transform: translateY(0);
-          }
-        }
-
-        .animate-fadeIn {
-          animation: fadeIn 0.3s ease-out forwards;
-          opacity: 0;
-        }
-      `}</style>
-    </div>
+    </PageShell>
   );
 }
