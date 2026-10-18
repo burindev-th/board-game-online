@@ -23,7 +23,7 @@ type PageShellProps = {
 
 export function PageShell({ children, backHref, backLabel = "กลับ", brandLink = true, showBrand = true, actions, width = "md", center = false, className }: PageShellProps) {
   return (
-    <div className="flex min-h-screen flex-col bg-bg text-fg">
+    <div className="flex min-h-screen flex-col text-fg">
       <header className="mx-auto flex w-full max-w-5xl items-center justify-between gap-3 px-4 py-4">
         {backHref ? (
           <Button href={backHref} variant="ghost" size="sm" icon={<LuArrowLeft aria-hidden />}>

@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { Anuphan, Bai_Jamjuree, Space_Grotesk } from "next/font/google";
 import "./globals.css";
 import AgeModal from "@/components/AgeModal";
-import { ThemeProvider, ThemeScript } from "@/components/theme";
+import { DotGridBackground, ThemeProvider, ThemeScript } from "@/components/theme";
 import { cn } from "@/lib/utils/cn";
 
 const bodyFont = Anuphan({
@@ -47,6 +47,7 @@ export default function RootLayout({
       </head>
       <body>
         <ThemeProvider>
+          <DotGridBackground />
           {children}
           <AgeModal />
         </ThemeProvider>

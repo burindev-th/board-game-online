@@ -98,7 +98,7 @@ export default function GamePage({ params }: GamePageProps) {
   // Loading state
   if (roomLoading || playersLoading) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-bg text-fg">
+      <div className="flex min-h-screen items-center justify-center text-fg">
         <Spinner size="lg" />
       </div>
     );
@@ -107,7 +107,7 @@ export default function GamePage({ params }: GamePageProps) {
   // Error state
   if (roomError || playersError || !room) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-bg p-4 text-fg">
+      <div className="flex min-h-screen items-center justify-center p-4 text-fg">
         <Card padding="lg" className="w-full max-w-md text-center">
           <Heading level="h2" className="mb-4">
             เกิดข้อผิดพลาด
@@ -125,7 +125,7 @@ export default function GamePage({ params }: GamePageProps) {
   // const currentPlayer = players.find(p => p.id === playerId);
 
   return (
-    <div className="min-h-screen bg-bg px-3 pb-8 text-fg md:px-4">
+    <div className="min-h-screen px-3 pb-8 text-fg md:px-4">
       <div className="mx-auto max-w-5xl">
         {/* Room bar: ข้อมูลห้องแบบย่อ เพื่อให้พื้นที่หลักเป็นของเกม */}
         <header className="flex items-center gap-2 py-3 md:gap-3 md:py-4">
