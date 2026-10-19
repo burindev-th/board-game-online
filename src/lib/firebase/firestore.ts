@@ -4,19 +4,31 @@
  */
 
 import {
-  doc,
   deleteDoc,
   updateDoc,
   increment,
   serverTimestamp,
-  collection,
   query,
   orderBy,
   limit,
   getDocs,
   getDoc
 } from 'firebase/firestore';
-import { db } from './config';
+import { roomPlayerRef, roomPlayersRef, roomRef } from './refs';
+
+/**
+ * ข้อมูลเริ่มต้นของผู้เล่นใหม่ในห้อง (ใช้ตอนสร้างห้องและเข้าร่วมห้อง)
+ */
+export function createPlayerData(playerId: string, playerName: string, isHost: boolean) {
+  return {
+    id: playerId,
+    name: playerName.trim(),
+    isHost,
+    isReady: false,
+    isOnline: true,
+    joinedAt: serverTimestamp(),
+  };
+}
 
 /**
  * Kick Player - ลบผู้เล่นออกจากห้อง (เฉพาะ host)
@@ -24,12 +36,12 @@ import { db } from './config';
 export async function kickPlayer(roomId: string, playerId: string): Promise<void> {
   try {
     // ลบ player document
-    const playerRef = doc(db, `rooms/${roomId}/players`, playerId);
+    const playerRef = roomPlayerRef(roomId, playerId);
     await deleteDoc(playerRef);
 
     // ลดจำนวนผู้เล่นในห้อง
-    const roomRef = doc(db, 'rooms', roomId);
-    await updateDoc(roomRef, {
+    const roomDocRef = roomRef(roomId);
+    await updateDoc(roomDocRef, {
       currentPlayers: increment(-1),
       updatedAt: serverTimestamp(),
     });
@@ -50,7 +62,7 @@ export async function toggleReady(
   currentReadyState: boolean
 ): Promise<void> {
   try {
-    const playerRef = doc(db, `rooms/${roomId}/players`, playerId);
+    const playerRef = roomPlayerRef(roomId, playerId);
     await updateDoc(playerRef, {
       isReady: !currentReadyState,
     });
@@ -68,8 +80,8 @@ export async function toggleReady(
 export async function leaveRoom(roomId: string, playerId: string): Promise<void> {
   try {
     // ดึงข้อมูลห้องและผู้เล่น
-    const roomRef = doc(db, 'rooms', roomId);
-    const roomSnap = await getDoc(roomRef);
+    const roomDocRef = roomRef(roomId);
+    const roomSnap = await getDoc(roomDocRef);
 
     if (!roomSnap.exists()) {
       throw new Error('ไม่พบห้อง');
@@ -79,13 +91,13 @@ export async function leaveRoom(roomId: string, playerId: string): Promise<void>
     const isHost = roomData.hostId === playerId;
 
     // ลบ player
-    const playerRef = doc(db, `rooms/${roomId}/players`, playerId);
+    const playerRef = roomPlayerRef(roomId, playerId);
     await deleteDoc(playerRef);
 
     // ถ้าเป็น host และยังมีคนอย่ใน่ห้อง
     if (isHost && roomData.currentPlayers > 1) {
       // หา player ถัดไปให้เป็น host
-      const playersRef = collection(db, `rooms/${roomId}/players`);
+      const playersRef = roomPlayersRef(roomId);
       const q = query(playersRef, orderBy('joinedAt', 'asc'), limit(1));
       const playersSnap = await getDocs(q);
 
@@ -93,14 +105,14 @@ export async function leaveRoom(roomId: string, playerId: string): Promise<void>
         const newHostId = playersSnap.docs[0].id;
 
         // โอนสิทธิ์ host
-        await updateDoc(roomRef, {
+        await updateDoc(roomDocRef, {
           hostId: newHostId,
           currentPlayers: increment(-1),
           updatedAt: serverTimestamp(),
         });
 
         // อัพเดทผู้เล่นใหม่เป็น host
-        const newHostRef = doc(db, `rooms/${roomId}/players`, newHostId);
+        const newHostRef = roomPlayerRef(roomId, newHostId);
         await updateDoc(newHostRef, {
           isHost: true,
         });
@@ -109,11 +121,11 @@ export async function leaveRoom(roomId: string, playerId: string): Promise<void>
       }
     } else if (roomData.currentPlayers <= 1) {
       // ถ้าไม่มีคนเหลือ ลบห้อง
-      await deleteDoc(roomRef);
+      await deleteDoc(roomDocRef);
       console.log(`✅ Deleted empty room ${roomId}`);
     } else {
       // ถ้าไม่ใช่ host แค่ลดจำนวนผู้เล่น
-      await updateDoc(roomRef, {
+      await updateDoc(roomDocRef, {
         currentPlayers: increment(-1),
         updatedAt: serverTimestamp(),
       });
@@ -131,8 +143,8 @@ export async function leaveRoom(roomId: string, playerId: string): Promise<void>
  */
 export async function startGame(roomId: string): Promise<void> {
   try {
-    const roomRef = doc(db, 'rooms', roomId);
-    await updateDoc(roomRef, {
+    const roomDocRef = roomRef(roomId);
+    await updateDoc(roomDocRef, {
       status: 'playing',
       updatedAt: serverTimestamp(),
     });
@@ -157,8 +169,8 @@ export async function updateRoomSettings(
 ): Promise<void> {
   try {
     // Verify room exists and user is host
-    const roomRef = doc(db, 'rooms', roomId);
-    const roomSnap = await getDoc(roomRef);
+    const roomDocRef = roomRef(roomId);
+    const roomSnap = await getDoc(roomDocRef);
 
     if (!roomSnap.exists()) {
       throw new Error('ไม่พบห้อง');
@@ -190,7 +202,7 @@ export async function updateRoomSettings(
       updateData.timeLimit = settings.timeLimit;
     }
 
-    await updateDoc(roomRef, updateData);
+    await updateDoc(roomDocRef, updateData);
 
     console.log(`✅ Updated room settings in room ${roomId}`);
   } catch (error) {

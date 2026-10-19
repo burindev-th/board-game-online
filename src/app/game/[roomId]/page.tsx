@@ -26,6 +26,9 @@ import {
 import { cn } from "@/lib/utils/cn";
 import { getPlayerColor } from "@/lib/theme/playerColors";
 import { ThemeToggle } from "@/components/theme";
+import { ITO_GAME_ID } from "@/constants/ito";
+import { formatRoomCode } from "@/lib/utils/roomCode";
+import { clearRoomPlayerId, getRoomPlayerId } from "@/lib/utils/playerSession";
 
 interface GamePageProps {
   params: Promise<{
@@ -62,7 +65,7 @@ export default function GamePage({ params }: GamePageProps) {
 
   // Get playerId from localStorage
   useEffect(() => {
-    const id = localStorage.getItem(`room_${roomId}_playerId`);
+    const id = getRoomPlayerId(roomId);
     console.log("🎮 Game page - Reading playerId from localStorage:", {
       roomId,
       playerId: id,
@@ -86,7 +89,7 @@ export default function GamePage({ params }: GamePageProps) {
       if (!playerExists && players.length > 0) {
         console.log("⚠️ Player not found in room");
         alert("คุณไม่อยู่ในห้องนี้แล้ว");
-        localStorage.removeItem(`room_${roomId}_playerId`);
+        clearRoomPlayerId(roomId);
         router.push("/");
       }
     }
@@ -145,7 +148,7 @@ export default function GamePage({ params }: GamePageProps) {
             <p className="text-caption text-fg-muted">
               ห้อง{" "}
               <span className="font-bold tracking-wider text-fg">
-                {room.code.slice(0, 3)}-{room.code.slice(3)}
+                {formatRoomCode(room.code)}
               </span>
             </p>
           </div>
@@ -218,7 +221,7 @@ export default function GamePage({ params }: GamePageProps) {
         </header>
 
         {/* Game Content */}
-        {room.gameId === "BWLxJkh45e6RiALRBmcl" &&
+        {room.gameId === ITO_GAME_ID &&
         playerId &&
         room.gameSessionId ? (
           <ItoGame sessionId={room.gameSessionId} playerId={playerId} />

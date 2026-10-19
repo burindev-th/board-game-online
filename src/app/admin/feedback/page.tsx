@@ -1,12 +1,11 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { onAuthStateChanged, User } from 'firebase/auth';
-import { auth } from '@/lib/firebase/config';
 import { useFeedback } from '@/lib/hooks/useFeedback';
 import { updateFeedbackStatus, deleteFeedback } from '@/lib/firebase/feedback';
-import { useAdminActivity } from '@/lib/hooks/useAdminActivity';
+import { useAdminAuth } from '@/lib/hooks/useAdminAuth';
+import { formatThaiDateTime as formatDate } from '@/lib/utils/date';
 import { FaBug, FaLightbulb, FaCheck, FaEye, FaClock, FaTrash, FaArrowLeft } from 'react-icons/fa';
 import type { Feedback } from '@/types/feedback';
 
@@ -14,29 +13,13 @@ type FilterStatus = 'all' | 'pending' | 'reviewed' | 'resolved';
 
 export default function AdminFeedbackPage() {
   const router = useRouter();
-  const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState(true);
+  // Check authentication + auto-logout after 8 hours of inactivity
+  const { user, loading } = useAdminAuth();
   const { feedbacks, loading: feedbacksLoading } = useFeedback();
 
   const [filterStatus, setFilterStatus] = useState<FilterStatus>('all');
   const [selectedFeedback, setSelectedFeedback] = useState<Feedback | null>(null);
   const [updating, setUpdating] = useState(false);
-
-  useAdminActivity();
-
-  // Check authentication
-  useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
-      if (currentUser) {
-        setUser(currentUser);
-      } else {
-        router.push('/admin/login');
-      }
-      setLoading(false);
-    });
-
-    return () => unsubscribe();
-  }, [router]);
 
   // Filter feedbacks (แสดงเฉพาะแจ้งปัญหา)
   const filteredFeedbacks = feedbacks
@@ -54,7 +37,7 @@ export default function AdminFeedbackPage() {
       if (selectedFeedback?.id === feedbackId) {
         setSelectedFeedback({ ...selectedFeedback, status });
       }
-    } catch (error) {
+    } catch {
       alert('เกิดข้อผิดพลาดในการอัพเดทสถานะ');
     } finally {
       setUpdating(false);
@@ -71,24 +54,11 @@ export default function AdminFeedbackPage() {
       if (selectedFeedback?.id === feedbackId) {
         setSelectedFeedback(null);
       }
-    } catch (error) {
+    } catch {
       alert('เกิดข้อผิดพลาดในการลบ feedback');
     } finally {
       setUpdating(false);
     }
-  };
-
-  // Format date
-  const formatDate = (timestamp: any) => {
-    if (!timestamp) return '-';
-    const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
-    return date.toLocaleDateString('th-TH', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-    });
   };
 
   // Get status badge

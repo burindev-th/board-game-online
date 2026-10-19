@@ -2,6 +2,7 @@
 
 import { LuInfo } from 'react-icons/lu';
 import { Game } from '@/types';
+import { ITO_GAME_ID } from '@/constants/ito';
 import { Alert, Button, Select, Spinner, Text } from '@/components/ui';
 
 interface GameSelectorProps {
@@ -26,7 +27,7 @@ export default function GameSelector({
   gamesError = null,
 }: GameSelectorProps) {
   const selectedGame = games.find((game) => game.id === selectedGameId);
-  const isItoGame = selectedGame?.id === 'BWLxJkh45e6RiALRBmcl';
+  const isItoGame = selectedGame?.id === ITO_GAME_ID;
 
   return (
     <div>

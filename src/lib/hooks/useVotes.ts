@@ -4,8 +4,8 @@
  */
 
 import { useEffect, useState } from 'react';
-import { collection, onSnapshot } from 'firebase/firestore';
-import { db } from '@/lib/firebase/config';
+import { onSnapshot } from 'firebase/firestore';
+import { sessionSubcollectionRef } from '@/lib/firebase/refs';
 import type { ItoVote } from '@/types/ito';
 
 interface UseVotesResult {
@@ -24,7 +24,7 @@ export function useVotes(sessionId: string): UseVotesResult {
       return;
     }
 
-    const votesRef = collection(db, `game_sessions/${sessionId}/votes`);
+    const votesRef = sessionSubcollectionRef(sessionId, 'votes');
 
     const unsubscribe = onSnapshot(
       votesRef,

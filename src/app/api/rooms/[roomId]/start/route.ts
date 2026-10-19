@@ -19,6 +19,9 @@ import {
 } from 'firebase/firestore';
 import { db } from '@/lib/firebase/config';
 import { initializeItoGame } from '@/lib/firebase/ito';
+import { gameRef, roomPlayersRef, roomRef as getRoomRef } from '@/lib/firebase/refs';
+import { apiError, apiServerError } from '@/lib/api/response';
+import { ITO_GAME_ID } from '@/constants/ito';
 
 interface StartGameRequest {
   hostId: string;
@@ -38,50 +41,34 @@ export async function POST(
 
     // Validation - hostId
     if (!hostId || typeof hostId !== 'string') {
-      return NextResponse.json(
-        { success: false, error: 'กรุณาระบุ hostId' },
-        { status: 400 }
-      );
+      return apiError('กรุณาระบุ hostId', 400);
     }
 
     // Get room document
-    const roomRef = doc(db, 'rooms', roomId);
+    const roomRef = getRoomRef(roomId);
     const roomSnap = await getDoc(roomRef);
 
     if (!roomSnap.exists()) {
-      return NextResponse.json(
-        { success: false, error: 'ไม่พบห้อง' },
-        { status: 404 }
-      );
+      return apiError('ไม่พบห้อง', 404);
     }
 
     const roomData = roomSnap.data();
 
     // Validation - Check if requester is the host
     if (roomData.hostId !== hostId) {
-      return NextResponse.json(
-        { success: false, error: 'คุณไม่ใช่หัวหน้าห้อง' },
-        { status: 403 }
-      );
+      return apiError('คุณไม่ใช่หัวหน้าห้อง', 403);
     }
 
     // Validation - Check if room already started
     if (roomData.status === 'playing') {
-      return NextResponse.json(
-        { success: false, error: 'เกมเริ่มแล้ว' },
-        { status: 400 }
-      );
+      return apiError('เกมเริ่มแล้ว', 400);
     }
 
     // Get game details to check minPlayer
-    const gameRef = doc(db, 'games', roomData.gameId);
-    const gameSnap = await getDoc(gameRef);
+    const gameSnap = await getDoc(gameRef(roomData.gameId));
 
     if (!gameSnap.exists()) {
-      return NextResponse.json(
-        { success: false, error: 'ไม่พบข้อมูลเกม' },
-        { status: 404 }
-      );
+      return apiError('ไม่พบข้อมูลเกม', 404);
     }
 
     const gameInfo = gameSnap.data();
@@ -89,22 +76,16 @@ export async function POST(
 
     // Validation - Check minimum players
     if (roomData.currentPlayers < minPlayers) {
-      return NextResponse.json(
-        { success: false, error: `ต้องมีผู้เล่นอย่างน้อย ${minPlayers} คน` },
-        { status: 400 }
-      );
+      return apiError(`ต้องมีผู้เล่นอย่างน้อย ${minPlayers} คน`, 400);
     }
 
     // Get all players (sorted by joinedAt)
-    const playersRef = collection(db, `rooms/${roomId}/players`);
+    const playersRef = roomPlayersRef(roomId);
     const playersQuery = query(playersRef, orderBy('joinedAt', 'asc'));
     const playersSnap = await getDocs(playersQuery);
 
     if (playersSnap.empty || playersSnap.size < minPlayers) {
-      return NextResponse.json(
-        { success: false, error: `ต้องมีผู้เล่นอย่างน้อย ${minPlayers} คน` },
-        { status: 400 }
-      );
+      return apiError(`ต้องมีผู้เล่นอย่างน้อย ${minPlayers} คน`, 400);
     }
 
     // Validation - Check if all players are ready (except host)
@@ -115,10 +96,7 @@ export async function POST(
     });
 
     if (!allPlayersReady) {
-      return NextResponse.json(
-        { success: false, error: 'ผู้เล่นทุกคนต้องกด Ready ก่อน' },
-        { status: 400 }
-      );
+      return apiError('ผู้เล่นทุกคนต้องกด Ready ก่อน', 400);
     }
 
     // Create game session document
@@ -140,7 +118,7 @@ export async function POST(
     await setDoc(gameSessionDoc, gameSessionData);
 
     // Initialize game-specific logic
-    if (roomData.gameId === 'BWLxJkh45e6RiALRBmcl') {
+    if (roomData.gameId === ITO_GAME_ID) {
       // ITO Game - iTo
       const playerIds = playersSnap.docs.map((doc) => doc.id);
       const playerNames: { [key: string]: string } = {};
@@ -151,10 +129,7 @@ export async function POST(
       const result = await initializeItoGame(gameSessionId, roomId, playerIds, playerNames);
 
       if (!result) {
-        return NextResponse.json(
-          { success: false, error: 'ไม่สามารถเริ่มเกม ITO ได้' },
-          { status: 500 }
-        );
+        return apiError('ไม่สามารถเริ่มเกม ITO ได้', 500);
       }
     }
 
@@ -173,14 +148,6 @@ export async function POST(
     });
   } catch (error) {
     console.error('Error starting game:', error);
-
-    return NextResponse.json(
-      {
-        success: false,
-        error: 'เกิดข้อผิดพลาดในการเริ่มเกม กรุณาลองใหม่อีกครั้ง',
-        details: error instanceof Error ? error.message : 'Unknown error',
-      },
-      { status: 500 }
-    );
+    return apiServerError('เกิดข้อผิดพลาดในการเริ่มเกม กรุณาลองใหม่อีกครั้ง', error);
   }
 }

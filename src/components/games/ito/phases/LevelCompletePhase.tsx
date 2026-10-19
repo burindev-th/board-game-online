@@ -9,6 +9,7 @@ import { markPlayerReady } from "@/lib/firebase/ito";
 import { LuCheck, LuPartyPopper, LuX } from "react-icons/lu";
 import { Badge, Button, Card, Heading, Hearts, Text } from "@/components/ui";
 import PlayerProgress from "../PlayerProgress";
+import { getPlayerNameMap, getUniquePlayerIds } from "@/lib/utils/playerStatusUtils";
 
 type ItoPlayerAnswer = {
   playerId: string;
@@ -49,18 +50,11 @@ export default function LevelCompletePhase({
   submitting,
   setSubmitting,
 }: LevelCompletePhaseProps) {
-  const uniquePlayerIds = Array.from(
-    new Set(playerAnswers.map((a) => a.playerId))
-  );
+  const uniquePlayerIds = getUniquePlayerIds(playerAnswers);
   const totalPlayers = uniquePlayerIds.length;
 
   // สร้าง map ของ playerId → playerName
-  const playerNames: { [key: string]: string } = {};
-  playerAnswers.forEach((a) => {
-    if (!playerNames[a.playerId]) {
-      playerNames[a.playerId] = a.playerName;
-    }
-  });
+  const playerNames = getPlayerNameMap(playerAnswers);
 
   // หาว่าใครพร้อมแล้ว
   const readyPlayerIds = readyPlayers.map((r) => r.playerId);

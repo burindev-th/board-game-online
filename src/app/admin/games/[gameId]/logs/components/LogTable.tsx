@@ -1,5 +1,6 @@
 import { ItoGameLog } from "@/lib/hooks/useItoGameLogs";
 import { SortField } from "../hooks/useLogFilters";
+import { formatThaiDateTime as formatDate } from "@/lib/utils/date";
 
 interface LogTableProps {
   logs: ItoGameLog[];
@@ -37,18 +38,6 @@ export function LogTable({
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
       </svg>
     );
-  };
-
-  const formatDate = (timestamp: any) => {
-    if (!timestamp) return '-';
-    const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
-    return new Intl.DateTimeFormat('th-TH', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-    }).format(date);
   };
 
   return (

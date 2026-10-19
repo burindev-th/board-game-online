@@ -1,9 +1,10 @@
 import { useMemo, useState } from 'react';
 import { ItoGameLog } from '@/lib/hooks/useItoGameLogs';
+import { toDate } from '@/lib/utils/date';
 
 export type SortField = 'createdAt' | 'number' | 'answer';
 
-export function useLogFilters(logs: ItoGameLog[], questions: { [key: string]: string }) {
+export function useLogFilters(logs: ItoGameLog[]) {
   const [selectedAgeRange, setSelectedAgeRange] = useState<string>("all");
   const [selectedQuestion, setSelectedQuestion] = useState<string>("all");
   const [minNumber, setMinNumber] = useState<string>("");
@@ -62,7 +63,7 @@ export function useLogFilters(logs: ItoGameLog[], questions: { [key: string]: st
 
       // Date range filter
       if (startDate || endDate) {
-        const logDate = log.createdAt?.toDate ? log.createdAt.toDate() : new Date(log.createdAt);
+        const logDate = toDate(log.createdAt);
 
         if (startDate) {
           const start = new Date(startDate);
@@ -85,9 +86,7 @@ export function useLogFilters(logs: ItoGameLog[], questions: { [key: string]: st
 
       switch (sortField) {
         case 'createdAt':
-          const dateA = a.createdAt?.toDate ? a.createdAt.toDate() : new Date(a.createdAt);
-          const dateB = b.createdAt?.toDate ? b.createdAt.toDate() : new Date(b.createdAt);
-          compareValue = dateA.getTime() - dateB.getTime();
+          compareValue = toDate(a.createdAt).getTime() - toDate(b.createdAt).getTime();
           break;
         case 'number':
           compareValue = a.number - b.number;
@@ -101,7 +100,7 @@ export function useLogFilters(logs: ItoGameLog[], questions: { [key: string]: st
     });
 
     return sorted;
-  }, [logs, selectedAgeRange, selectedQuestion, minNumber, maxNumber, selectedEditStatus, selectedTestStatus, startDate, endDate, sortField, sortDirection, questions]);
+  }, [logs, selectedAgeRange, selectedQuestion, minNumber, maxNumber, selectedEditStatus, selectedTestStatus, startDate, endDate, sortField, sortDirection]);
 
   const resetFilters = () => {
     setSelectedAgeRange("all");

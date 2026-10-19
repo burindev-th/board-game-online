@@ -13,17 +13,77 @@ import {
   deleteDoc,
   query,
   where,
-  orderBy,
   serverTimestamp,
   Timestamp,
   DocumentReference,
+  CollectionReference,
+  WriteBatch,
   runTransaction,
   writeBatch,
   addDoc,
 } from 'firebase/firestore';
 import { db } from './config';
-import type { ItoGameState, ItoPlayerAnswer, ItoQuestion, ItoReadyStatus } from '@/types/ito';
+import { gameSessionRef, roomRef, sessionSubcollectionRef, sessionSubdocRef } from './refs';
+import type { ItoGamePhase, ItoGameState, ItoPlayerAnswer, ItoQuestion } from '@/types/ito';
+import { ITO_GAME_ID } from '@/constants/ito';
 import { getAge } from '@/lib/utils/ageStorage';
+import { createAnswerId, parseAnswerId } from '@/lib/utils/voteUtils';
+
+/**
+ * Helper: เพิ่มคำสั่งลบทุก document ใน collection ลงใน batch
+ * @returns จำนวน document ที่จะถูกลบ
+ */
+async function addDeleteAllToBatch(batch: WriteBatch, collectionRef: CollectionReference): Promise<number> {
+  const snapshot = await getDocs(collectionRef);
+  snapshot.docs.forEach((docSnap) => {
+    batch.delete(docSnap.ref);
+  });
+  return snapshot.docs.length;
+}
+
+/**
+ * Helper: สร้าง player answers ตามลำดับผู้เล่น (คนละ numbersPerPlayer เลข)
+ */
+function buildPlayerAnswers(
+  playerIds: string[],
+  playerNames: { [playerId: string]: string },
+  numbers: number[],
+  numbersPerPlayer: number
+): ItoPlayerAnswer[] {
+  const playerAnswers: ItoPlayerAnswer[] = [];
+  let numberIndex = 0;
+
+  for (const playerId of playerIds) {
+    for (let answerIdx = 0; answerIdx < numbersPerPlayer; answerIdx++) {
+      playerAnswers.push({
+        playerId: playerId,
+        playerName: playerNames[playerId] || 'Unknown',
+        number: numbers[numberIndex],
+        answer: '',
+        isRevealed: false,
+        answerIndex: answerIdx,
+      });
+      numberIndex++;
+    }
+  }
+
+  return playerAnswers;
+}
+
+/**
+ * เปลี่ยน phase (และ field อื่นถ้ามี) ของ game session
+ */
+export async function updateSessionPhase(
+  sessionId: string,
+  phase: ItoGamePhase,
+  extra: Partial<Pick<ItoGameState, 'status'>> = {}
+): Promise<void> {
+  await updateDoc(gameSessionRef(sessionId), {
+    phase,
+    ...extra,
+    updatedAt: serverTimestamp(),
+  });
+}
 
 /**
  * Helper: ดึง timeLimit จาก room (หน่วย: นาที)
@@ -31,8 +91,7 @@ import { getAge } from '@/lib/utils/ageStorage';
  */
 async function getTimeLimitFromRoom(roomId: string): Promise<number> {
   try {
-    const roomRef = doc(db, 'rooms', roomId);
-    const roomSnap = await getDoc(roomRef);
+    const roomSnap = await getDoc(roomRef(roomId));
 
     if (!roomSnap.exists()) {
       console.warn('⚠️ Room not found, using default time limit (10 minutes)');
@@ -194,29 +253,18 @@ export async function startNextLevel(
 
     // 4. ใช้ Batch Write เพื่อป้องกัน race condition
     const batch = writeBatch(db);
-    const sessionRef = doc(db, 'game_sessions', sessionId);
-    const playerAnswersRef = collection(db, `game_sessions/${sessionId}/player_answers`);
+    const sessionRef = gameSessionRef(sessionId);
+    const playerAnswersRef = sessionSubcollectionRef(sessionId, 'player_answers');
 
     // ลบ player_answers เก่าทั้งหมด
-    const oldAnswersSnap = await getDocs(playerAnswersRef);
-    oldAnswersSnap.docs.forEach((docSnap) => {
-      batch.delete(docSnap.ref);
-    });
-    console.log(`🗑️ Deleting ${oldAnswersSnap.docs.length} old player_answers`);
+    const deletedAnswers = await addDeleteAllToBatch(batch, playerAnswersRef);
+    console.log(`🗑️ Deleting ${deletedAnswers} old player_answers`);
 
     // ลบ votes เก่า
-    const votesRef = collection(db, `game_sessions/${sessionId}/votes`);
-    const votesSnap = await getDocs(votesRef);
-    votesSnap.docs.forEach((docSnap) => {
-      batch.delete(docSnap.ref);
-    });
+    await addDeleteAllToBatch(batch, sessionSubcollectionRef(sessionId, 'votes'));
 
     // ลบ ready_status เก่า
-    const readyRef = collection(db, `game_sessions/${sessionId}/ready_status`);
-    const readySnap = await getDocs(readyRef);
-    readySnap.docs.forEach((docSnap) => {
-      batch.delete(docSnap.ref);
-    });
+    await addDeleteAllToBatch(batch, sessionSubcollectionRef(sessionId, 'ready_status'));
 
     // อัปเดต Game State
     batch.update(sessionRef, {
@@ -235,31 +283,17 @@ export async function startNextLevel(
     });
 
     // สร้าง Player Answers ใหม่
-    const playerAnswers: ItoPlayerAnswer[] = [];
-    let numberIndex = 0;
+    const playerAnswers = buildPlayerAnswers(playerIds, playerNames, numbers, numbersPerPlayer);
 
-    for (const playerId of playerIds) {
-      for (let answerIdx = 0; answerIdx < numbersPerPlayer; answerIdx++) {
-        const playerAnswer: ItoPlayerAnswer = {
-          playerId: playerId,
-          playerName: playerNames[playerId] || 'Unknown',
-          number: numbers[numberIndex],
-          answer: '',
-          isRevealed: false,
-          answerIndex: answerIdx,
-        };
-        playerAnswers.push(playerAnswer);
+    for (const playerAnswer of playerAnswers) {
+      const docId = createAnswerId(playerAnswer.playerId, playerAnswer.answerIndex);
+      const docRef = doc(playerAnswersRef, docId);
+      batch.set(docRef, {
+        ...playerAnswer,
+        submittedAt: null,
+      });
 
-        const docId = `${playerAnswer.playerId}_${playerAnswer.answerIndex}`;
-        const docRef = doc(playerAnswersRef, docId);
-        batch.set(docRef, {
-          ...playerAnswer,
-          submittedAt: null,
-        });
-
-        console.log(`  📝 Preparing: ${docId} → number: ${playerAnswer.number}`);
-        numberIndex++;
-      }
+      console.log(`  📝 Preparing: ${docId} → number: ${playerAnswer.number}`);
     }
 
     // Commit batch (atomic operation)
@@ -326,8 +360,8 @@ export async function initializeItoGame(
 
     // 4. ใช้ Transaction เพื่อป้องกัน race condition
     const result = await runTransaction(db, async (transaction) => {
-      const sessionRef = doc(db, 'game_sessions', sessionId);
-      const playerAnswersRef = collection(db, `game_sessions/${sessionId}/player_answers`);
+      const sessionRef = gameSessionRef(sessionId);
+      const playerAnswersRef = sessionSubcollectionRef(sessionId, 'player_answers');
 
       // อ่านเพื่อเช็คว่ามี player_answers อยู่แล้วหรือไม่
       const existingAnswersSnapshot = await getDocs(playerAnswersRef);
@@ -344,7 +378,7 @@ export async function initializeItoGame(
       const gameState: ItoGameState = {
         id: sessionId,
         roomId: roomId,
-        gameId: 'BWLxJkh45e6RiALRBmcl',
+        gameId: ITO_GAME_ID,
         currentLevel: 1,
         totalLevels: 3,
         hearts: 3,
@@ -362,22 +396,7 @@ export async function initializeItoGame(
       };
 
       // สร้าง Player Answers
-      const playerAnswers: ItoPlayerAnswer[] = [];
-      let numberIndex = 0;
-
-      for (const playerId of playerIds) {
-        for (let answerIdx = 0; answerIdx < numbersPerPlayer; answerIdx++) {
-          playerAnswers.push({
-            playerId: playerId,
-            playerName: playerNames[playerId] || 'Unknown',
-            number: numbers[numberIndex],
-            answer: '',
-            isRevealed: false,
-            answerIndex: answerIdx,
-          });
-          numberIndex++;
-        }
-      }
+      const playerAnswers = buildPlayerAnswers(playerIds, playerNames, numbers, numbersPerPlayer);
 
       // อัปเดต game state
       transaction.update(sessionRef, {
@@ -394,7 +413,7 @@ export async function initializeItoGame(
       });
 
       for (const playerAnswer of playerAnswers) {
-        const docId = `${playerAnswer.playerId}_${playerAnswer.answerIndex}`;
+        const docId = createAnswerId(playerAnswer.playerId, playerAnswer.answerIndex);
         const answerDocRef = doc(playerAnswersRef, docId);
         transaction.set(answerDocRef, {
           ...playerAnswer,
@@ -445,8 +464,7 @@ async function validateUniqueNumbers(sessionId: string): Promise<{
   duplicates: number[];
   details: Array<{ docId: string; playerId: string; number: number }>;
 }> {
-  const playerAnswersRef = collection(db, `game_sessions/${sessionId}/player_answers`);
-  const snapshot = await getDocs(playerAnswersRef);
+  const snapshot = await getDocs(sessionSubcollectionRef(sessionId, 'player_answers'));
 
   const numberCounts: { [num: number]: number } = {};
   const details: Array<{ docId: string; playerId: string; number: number }> = [];
@@ -463,8 +481,8 @@ async function validateUniqueNumbers(sessionId: string): Promise<{
   });
 
   const duplicates = Object.entries(numberCounts)
-    .filter(([_, count]) => count > 1)
-    .map(([num, _]) => parseInt(num));
+    .filter(([, count]) => count > 1)
+    .map(([num]) => parseInt(num));
 
   return {
     isValid: duplicates.length === 0,
@@ -479,16 +497,11 @@ async function validateUniqueNumbers(sessionId: string): Promise<{
  * ลบ player_answers ทั้งหมดในกรณีที่มีข้อผิดพลาด
  */
 async function cleanupPlayerAnswers(sessionId: string): Promise<void> {
-  const playerAnswersRef = collection(db, `game_sessions/${sessionId}/player_answers`);
-  const snapshot = await getDocs(playerAnswersRef);
-
   const batch = writeBatch(db);
-  snapshot.docs.forEach((doc) => {
-    batch.delete(doc.ref);
-  });
+  const deletedCount = await addDeleteAllToBatch(batch, sessionSubcollectionRef(sessionId, 'player_answers'));
 
   await batch.commit();
-  console.log(`🗑️ Cleaned up ${snapshot.docs.length} player_answers documents`);
+  console.log(`🗑️ Cleaned up ${deletedCount} player_answers documents`);
 }
 
 /**
@@ -609,8 +622,7 @@ export async function submitPlayerAnswer(
 ): Promise<boolean> {
   try {
     // อัปเดตเฉพาะ document ที่มี answerIndex ตรงกัน
-    const docId = `${playerId}_${answerIndex}`;
-    const answerRef = doc(db, `game_sessions/${sessionId}/player_answers`, docId);
+    const answerRef = sessionSubdocRef(sessionId, 'player_answers', createAnswerId(playerId, answerIndex));
 
     // ดึงข้อมูลคำตอบเดิมก่อนอัปเดต (เพื่อเช็คว่าเป็นการแก้ไขหรือไม่)
     const answerSnapBefore = await getDoc(answerRef);
@@ -624,8 +636,7 @@ export async function submitPlayerAnswer(
     // เช็คว่าคำตอบเปลี่ยนจริงหรือไม่ ก่อนจะ log
     if (previousAnswer !== answer) {
       // ดึงข้อมูล game state และ player answer เพื่อ log
-      const sessionRef = doc(db, 'game_sessions', sessionId);
-      const sessionSnap = await getDoc(sessionRef);
+      const sessionSnap = await getDoc(gameSessionRef(sessionId));
       const answerSnap = await getDoc(answerRef);
 
       if (sessionSnap.exists() && answerSnap.exists()) {
@@ -659,8 +670,7 @@ export async function unsendPlayerAnswer(
   answerIndex: number
 ): Promise<boolean> {
   try {
-    const docId = `${playerId}_${answerIndex}`;
-    const answerRef = doc(db, `game_sessions/${sessionId}/player_answers`, docId);
+    const answerRef = sessionSubdocRef(sessionId, 'player_answers', createAnswerId(playerId, answerIndex));
 
     await updateDoc(answerRef, {
       submittedAt: null,
@@ -679,8 +689,7 @@ export async function unsendPlayerAnswer(
 export async function checkAllAnswersSubmitted(sessionId: string): Promise<boolean> {
   try {
     // ดึง game state เพื่อรู้ว่าควรมีกี่ documents
-    const sessionRef = doc(db, 'game_sessions', sessionId);
-    const sessionSnap = await getDoc(sessionRef);
+    const sessionSnap = await getDoc(gameSessionRef(sessionId));
 
     if (!sessionSnap.exists()) {
       console.log('❌ [checkAllAnswersSubmitted] Session not found');
@@ -690,8 +699,7 @@ export async function checkAllAnswersSubmitted(sessionId: string): Promise<boole
     const gameState = sessionSnap.data();
     const expectedDocs = gameState.totalRounds; // จำนวน documents ที่ควรมี
 
-    const answersRef = collection(db, `game_sessions/${sessionId}/player_answers`);
-    const snapshot = await getDocs(answersRef);
+    const snapshot = await getDocs(sessionSubcollectionRef(sessionId, 'player_answers'));
 
     console.log('🔍 [checkAllAnswersSubmitted]', {
       sessionId,
@@ -755,7 +763,7 @@ export async function checkAllAnswersSubmitted(sessionId: string): Promise<boole
  */
 export async function startVotingPhase(sessionId: string, roomId: string): Promise<boolean> {
   try {
-    const sessionRef = doc(db, 'game_sessions', sessionId);
+    const sessionRef = gameSessionRef(sessionId);
 
     // ดึง timeLimit จาก room
     const timeLimitMinutes = await getTimeLimitFromRoom(roomId);
@@ -786,7 +794,7 @@ export async function submitVote(
   votedForAnswerIndex: number
 ): Promise<boolean> {
   try {
-    const voteRef = doc(db, `game_sessions/${sessionId}/votes`, playerId);
+    const voteRef = sessionSubdocRef(sessionId, 'votes', playerId);
     await setDoc(voteRef, {
       playerId: playerId,
       votedForPlayerId: votedForPlayerId,
@@ -797,7 +805,7 @@ export async function submitVote(
     console.log('✅ Vote submitted:', {
       sessionId,
       playerId,
-      votedFor: `${votedForPlayerId}_${votedForAnswerIndex}`
+      votedFor: createAnswerId(votedForPlayerId, votedForAnswerIndex)
     });
     return true;
   } catch (error) {
@@ -812,7 +820,7 @@ export async function submitVote(
  */
 export async function getRandomUnrevealedAnswer(sessionId: string): Promise<{ playerId: string; answerIndex: number } | null> {
   try {
-    const answersRef = collection(db, `game_sessions/${sessionId}/player_answers`);
+    const answersRef = sessionSubcollectionRef(sessionId, 'player_answers');
     const q = query(answersRef, where('isRevealed', '==', false));
     const snapshot = await getDocs(q);
 
@@ -847,8 +855,7 @@ export async function getRandomUnrevealedAnswer(sessionId: string): Promise<{ pl
  */
 export async function countVotes(sessionId: string): Promise<{ playerId: string; answerIndex: number } | null> {
   try {
-    const votesRef = collection(db, `game_sessions/${sessionId}/votes`);
-    const snapshot = await getDocs(votesRef);
+    const snapshot = await getDocs(sessionSubcollectionRef(sessionId, 'votes'));
 
     if (snapshot.empty) {
       return null;
@@ -864,13 +871,13 @@ export async function countVotes(sessionId: string): Promise<{ playerId: string;
         playerId: data.playerId,
         votedForPlayerId: data.votedForPlayerId,
         votedForAnswerIndex: data.votedForAnswerIndex,
-        answerId: `${data.votedForPlayerId}_${data.votedForAnswerIndex}`
+        answerId: createAnswerId(data.votedForPlayerId, data.votedForAnswerIndex)
       });
     });
 
     snapshot.docs.forEach((doc) => {
       const data = doc.data();
-      const answerId = `${data.votedForPlayerId}_${data.votedForAnswerIndex}`;
+      const answerId = createAnswerId(data.votedForPlayerId, data.votedForAnswerIndex);
       voteCount[answerId] = (voteCount[answerId] || 0) + 1;
     });
 
@@ -902,16 +909,11 @@ export async function countVotes(sessionId: string): Promise<{ playerId: string;
     if (!selectedAnswerId) return null;
 
     // แยก answerId กลับเป็น playerId และ answerIndex
-    const [playerId, answerIndexStr] = selectedAnswerId.split('_');
-    const result = {
-      playerId,
-      answerIndex: parseInt(answerIndexStr, 10)
-    };
+    const result = parseAnswerId(selectedAnswerId);
 
     console.log('✅ countVotes result:', {
       selectedAnswerId,
-      playerId,
-      answerIndexStr,
+      playerId: result.playerId,
       answerIndex: result.answerIndex,
       answerIndexType: typeof result.answerIndex,
     });
@@ -939,7 +941,7 @@ export async function revealAndCheck(
 } | null> {
   try {
     // 1. ดึงข้อมูล game state และ player answers
-    const sessionRef = doc(db, 'game_sessions', sessionId);
+    const sessionRef = gameSessionRef(sessionId);
     const sessionSnap = await getDoc(sessionRef);
 
     if (!sessionSnap.exists()) {
@@ -949,8 +951,7 @@ export async function revealAndCheck(
     const gameState = sessionSnap.data() as ItoGameState;
 
     // 2. ดึงเลขทั้งหมด (เพื่อหา selectedAnswer และ unrevealed numbers)
-    const answersRef = collection(db, `game_sessions/${sessionId}/player_answers`);
-    const answersSnap = await getDocs(answersRef);
+    const answersSnap = await getDocs(sessionSubcollectionRef(sessionId, 'player_answers'));
 
     // 3. หา player answer ที่ถูกโหวต (ใช้ field playerId + answerIndex เทียบ)
     let selectedAnswer: ItoPlayerAnswer | null = null;
@@ -988,7 +989,7 @@ export async function revealAndCheck(
     });
 
     if (!selectedAnswer || !answerDocRef) {
-      console.error('❌ Player answer not found for:', `${selectedPlayerId}_${selectedAnswerIndex}`);
+      console.error('❌ Player answer not found for:', createAnswerId(selectedPlayerId, selectedAnswerIndex));
       console.error('❌ Search criteria:', {
         selectedPlayerId,
         selectedAnswerIndex,
@@ -1123,13 +1124,11 @@ export async function revealAndCheck(
       updatedAt: serverTimestamp(),
     });
 
-    // 13. Commit all changes atomically
-    await batch.commit();
+    // 13. Clean up votes for next round (อยู่ใน batch เดียวกัน → ลบเสร็จก่อน API ตอบกลับ)
+    await addDeleteAllToBatch(batch, sessionSubcollectionRef(sessionId, 'votes'));
 
-    // 14. Clean up votes for next round
-    const votesRef = collection(db, `game_sessions/${sessionId}/votes`);
-    const votesSnap = await getDocs(votesRef);
-    votesSnap.docs.forEach(async (docSnap) => await deleteDoc(docSnap.ref));
+    // 14. Commit all changes atomically
+    await batch.commit();
 
     return {
       success: true,
@@ -1153,7 +1152,7 @@ export async function markPlayerReady(
   playerName: string
 ): Promise<boolean> {
   try {
-    const readyRef = doc(db, `game_sessions/${sessionId}/ready_status`, playerId);
+    const readyRef = sessionSubdocRef(sessionId, 'ready_status', playerId);
     await setDoc(readyRef, {
       playerId,
       playerName,
@@ -1174,8 +1173,7 @@ export async function markPlayerReady(
 export async function checkAllPlayersReady(sessionId: string): Promise<boolean> {
   try {
     // ดึงจำนวนผู้เล่นทั้งหมด
-    const answersRef = collection(db, `game_sessions/${sessionId}/player_answers`);
-    const answersSnap = await getDocs(answersRef);
+    const answersSnap = await getDocs(sessionSubcollectionRef(sessionId, 'player_answers'));
 
     // นับ unique players
     const uniquePlayerIds = new Set<string>();
@@ -1187,8 +1185,7 @@ export async function checkAllPlayersReady(sessionId: string): Promise<boolean> 
     const totalPlayers = uniquePlayerIds.size;
 
     // ดึงจำนวนที่พร้อมแล้ว
-    const readyRef = collection(db, `game_sessions/${sessionId}/ready_status`);
-    const readySnap = await getDocs(readyRef);
+    const readySnap = await getDocs(sessionSubcollectionRef(sessionId, 'ready_status'));
     const readyCount = readySnap.size;
 
     console.log('🔍 Ready status check:', {
@@ -1209,8 +1206,7 @@ export async function checkAllPlayersReady(sessionId: string): Promise<boolean> 
  */
 export async function clearReadyStatus(sessionId: string): Promise<boolean> {
   try {
-    const readyRef = collection(db, `game_sessions/${sessionId}/ready_status`);
-    const readySnap = await getDocs(readyRef);
+    const readySnap = await getDocs(sessionSubcollectionRef(sessionId, 'ready_status'));
 
     const deletePromises = readySnap.docs.map((docSnap) => deleteDoc(docSnap.ref));
     await Promise.all(deletePromises);

@@ -6,7 +6,7 @@
 type LogLevel = 'info' | 'warn' | 'error' | 'debug';
 
 interface LogContext {
-  [key: string]: any;
+  [key: string]: unknown;
 }
 
 const isDevelopment = process.env.NODE_ENV === 'development';
@@ -18,7 +18,7 @@ class Logger {
     this.prefix = prefix;
   }
 
-  private formatMessage(level: LogLevel, message: string, context?: LogContext): string {
+  private formatMessage(level: LogLevel, message: string): string {
     const emoji = {
       info: 'ℹ️',
       warn: '⚠️',

@@ -9,13 +9,11 @@ import {
   doc,
   updateDoc,
   deleteDoc,
-  query,
-  where,
   getDocs,
   serverTimestamp,
 } from 'firebase/firestore';
 import { db } from './config';
-import type { Feedback, SuggestedItoQuestion } from '@/types/feedback';
+import type { Feedback } from '@/types/feedback';
 
 /**
  * Submit feedback (แจ้งปัญหา)

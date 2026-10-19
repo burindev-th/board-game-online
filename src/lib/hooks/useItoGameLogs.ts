@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { collection, query, orderBy, onSnapshot, getDocs } from 'firebase/firestore';
+import { collection, query, orderBy, onSnapshot, getDocs, Timestamp } from 'firebase/firestore';
 import { db } from '@/lib/firebase/config';
 
 export interface ItoGameLog {
@@ -11,7 +11,7 @@ export interface ItoGameLog {
   isEdited: boolean;
   previousAnswer: string | null;
   isTest: boolean;
-  createdAt: any;
+  createdAt: Timestamp | null;
 }
 
 export function useItoGameLogs() {

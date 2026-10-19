@@ -13,7 +13,12 @@ import { Alert, Badge, Button, Card, Heading, Text, Textarea } from "@/component
 import { cn } from "@/lib/utils/cn";
 import RevealedNumbersList from "../RevealedNumbersList";
 import PlayerProgress from "../PlayerProgress";
-import { calculatePlayerHintStatus } from "@/lib/utils/playerStatusUtils";
+import {
+  calculatePlayerHintStatus,
+  getPlayerNameMap,
+  getUniquePlayerIds,
+} from "@/lib/utils/playerStatusUtils";
+import { createAnswerId } from "@/lib/utils/voteUtils";
 
 type ItoPlayerAnswer = {
   playerId: string;
@@ -72,12 +77,9 @@ export default function VotingPhase({
   const [editing, setEditing] = useState<number[]>([]);
   const [savingIndex, setSavingIndex] = useState<number | null>(null);
 
-  const uniquePlayerIds = Array.from(new Set(playerAnswers.map((a) => a.playerId)));
+  const uniquePlayerIds = getUniquePlayerIds(playerAnswers);
   const totalPlayers = uniquePlayerIds.length;
-  const playerNames: Record<string, string> = {};
-  playerAnswers.forEach((a) => {
-    playerNames[a.playerId] ??= a.playerName;
-  });
+  const playerNames = getPlayerNameMap(playerAnswers);
 
   const hintStatus = calculatePlayerHintStatus(playerAnswers, gameState.currentLevel);
   const allPlayersSubmittedAll = Object.values(hintStatus).every(
@@ -86,14 +88,14 @@ export default function VotingPhase({
 
   const votedPlayerIds = new Set(votes.map((v) => v.playerId));
   const myVote = votes.find((v) => v.playerId === playerId);
-  const myVoteId = myVote ? `${myVote.votedForPlayerId}_${myVote.votedForAnswerIndex}` : null;
+  const myVoteId = myVote ? createAnswerId(myVote.votedForPlayerId, myVote.votedForAnswerIndex) : null;
   const selectionIsMyVote = !!myVoteId && selectedAnswerId === myVoteId;
 
   const voteOptions = (playerAnswers as ItoPlayerAnswerWithIndex[]).filter(
     (a) => !a.isRevealed && a.answer.trim() !== ""
   );
   const selectedOption = voteOptions.find(
-    (a) => `${a.playerId}_${a.answerIndex}` === selectedAnswerId
+    (a) => createAnswerId(a.playerId, a.answerIndex) === selectedAnswerId
   );
 
   const myOpenAnswers = [...myAnswers]
@@ -159,7 +161,7 @@ export default function VotingPhase({
               className="grid grid-cols-1 gap-3 sm:grid-cols-2"
             >
               {voteOptions.map((option) => {
-                const answerId = `${option.playerId}_${option.answerIndex}`;
+                const answerId = createAnswerId(option.playerId, option.answerIndex);
                 const isSelected = selectedAnswerId === answerId;
                 const isMine = option.playerId === playerId;
                 const voterNames = Array.from(

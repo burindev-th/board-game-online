@@ -7,6 +7,8 @@ import { cn } from '@/lib/utils/cn';
 import { useGames } from '@/lib/hooks/useGames';
 import { submitFeedback, submitItoQuestion, checkDuplicateItoQuestion } from '@/lib/firebase/feedback';
 import type { FeedbackType } from '@/types/feedback';
+import { ITO_GAME_ID } from '@/constants/ito';
+import { getErrorMessage } from '@/lib/utils/error';
 
 interface FeedbackModalProps {
   isOpen: boolean;
@@ -79,7 +81,7 @@ export default function FeedbackModal({ isOpen, onClose }: FeedbackModalProps) {
 
   // Check for duplicate question when typing
   useEffect(() => {
-    if (feedbackType === 'improvement' && selectedGameId === 'BWLxJkh45e6RiALRBmcl' && questionsTH.trim().length > 5) {
+    if (feedbackType === 'improvement' && selectedGameId === ITO_GAME_ID && questionsTH.trim().length > 5) {
       const timeoutId = setTimeout(async () => {
         setIsChecking(true);
         const result = await checkDuplicateItoQuestion(questionsTH);
@@ -119,7 +121,7 @@ export default function FeedbackModal({ isOpen, onClose }: FeedbackModalProps) {
         });
       } else {
         // Submit Ito question
-        if (selectedGameId === 'BWLxJkh45e6RiALRBmcl') {
+        if (selectedGameId === ITO_GAME_ID) {
           if (isDuplicate) {
             throw new Error('คำถามนี้มีอยู่ในระบบแล้ว');
           }
@@ -135,7 +137,7 @@ export default function FeedbackModal({ isOpen, onClose }: FeedbackModalProps) {
       }, 2000);
     } catch (error) {
       console.error('Error submitting:', error);
-      alert(error instanceof Error ? error.message : 'เกิดข้อผิดพลาด กรุณาลองใหม่อีกครั้ง');
+      alert(getErrorMessage(error, 'เกิดข้อผิดพลาด กรุณาลองใหม่อีกครั้ง'));
     } finally {
       setSubmitting(false);
     }
@@ -156,7 +158,7 @@ export default function FeedbackModal({ isOpen, onClose }: FeedbackModalProps) {
         form="feedback-form"
         loading={submitting}
         disabled={
-          (feedbackType === 'improvement' && selectedGameId !== 'BWLxJkh45e6RiALRBmcl') ||
+          (feedbackType === 'improvement' && selectedGameId !== ITO_GAME_ID) ||
           (feedbackType === 'improvement' && isDuplicate) ||
           isChecking
         }
@@ -269,7 +271,7 @@ export default function FeedbackModal({ isOpen, onClose }: FeedbackModalProps) {
             // Improvement Form (Ito Question)
             <>
               {/* Show form fields based on selected game */}
-              {selectedGameId === 'BWLxJkh45e6RiALRBmcl' ? (
+              {selectedGameId === ITO_GAME_ID ? (
                 // Ito game form
                 <>
                   <Input

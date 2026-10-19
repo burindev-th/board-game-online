@@ -2,10 +2,10 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter, useParams } from 'next/navigation';
-import { onAuthStateChanged, User } from 'firebase/auth';
-import { auth, db } from '@/lib/firebase/config';
-import { doc, getDoc, updateDoc } from 'firebase/firestore';
-import { useAdminActivity } from '@/lib/hooks/useAdminActivity';
+import { getDoc, updateDoc } from 'firebase/firestore';
+import { gameRef } from '@/lib/firebase/refs';
+import { useAdminAuth } from '@/lib/hooks/useAdminAuth';
+import { ITO_GAME_ID } from '@/constants/ito';
 
 interface Game {
   id: string;
@@ -22,30 +22,13 @@ export default function GameManagementPage() {
   const params = useParams();
   const gameId = params.gameId as string;
 
-  const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState(true);
+  // Check authentication + auto-logout after 8 hours of inactivity
+  const { user, loading } = useAdminAuth();
   const [game, setGame] = useState<Game | null>(null);
   const [minPlayer, setMinPlayer] = useState<number>(1);
   const [maxPlayer, setMaxPlayer] = useState<number>(1);
   const [isActive, setIsActive] = useState<boolean>(true);
   const [saving, setSaving] = useState(false);
-
-  // Track admin activity and auto-logout after 8 hours of inactivity
-  useAdminActivity();
-
-  // Check authentication
-  useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
-      if (currentUser) {
-        setUser(currentUser);
-      } else {
-        router.push('/admin/login');
-      }
-      setLoading(false);
-    });
-
-    return () => unsubscribe();
-  }, [router]);
 
   // Load game data
   useEffect(() => {
@@ -53,7 +36,7 @@ export default function GameManagementPage() {
 
     const loadGame = async () => {
       try {
-        const gameDoc = await getDoc(doc(db, 'games', gameId));
+        const gameDoc = await getDoc(gameRef(gameId));
         if (gameDoc.exists()) {
           const gameData = { id: gameDoc.id, ...gameDoc.data() } as Game;
           setGame(gameData);
@@ -90,7 +73,7 @@ export default function GameManagementPage() {
 
     setSaving(true);
     try {
-      await updateDoc(doc(db, 'games', gameId), {
+      await updateDoc(gameRef(gameId), {
         minPlayer: minPlayer,
         maxPlayer: maxPlayer,
         isActive: isActive,
@@ -242,7 +225,7 @@ export default function GameManagementPage() {
         </div>
 
         {/* Additional Features - Only for games with questions */}
-        {gameId === 'BWLxJkh45e6RiALRBmcl' && (
+        {gameId === ITO_GAME_ID && (
           <div className="bg-white rounded-lg shadow border border-gray-200 p-4 sm:p-6">
             <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-4">จัดการเนื้อหาเกม</h3>
             <div className="space-y-3">

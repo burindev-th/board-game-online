@@ -7,8 +7,8 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { collection, query, orderBy, onSnapshot, DocumentData } from 'firebase/firestore';
-import { db } from '@/lib/firebase/config';
+import { query, orderBy, onSnapshot, DocumentData } from 'firebase/firestore';
+import { roomPlayersRef } from '@/lib/firebase/refs';
 import { Player } from '@/types';
 
 interface UsePlayersResult {
@@ -30,7 +30,7 @@ export function usePlayers(roomId: string): UsePlayersResult {
     }
 
     // Reference to players sub-collection
-    const playersRef = collection(db, `rooms/${roomId}/players`);
+    const playersRef = roomPlayersRef(roomId);
 
     // Query: order by joinedAt (ascending - first joined first)
     const q = query(playersRef, orderBy('joinedAt', 'asc'));

@@ -1,44 +1,14 @@
 'use client';
 
-import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { onAuthStateChanged, signOut, User } from 'firebase/auth';
-import { auth } from '@/lib/firebase/config';
 import { useAllGames } from '@/lib/hooks/useAllGames';
-import { useAdminActivity } from '@/lib/hooks/useAdminActivity';
+import { useAdminAuth } from '@/lib/hooks/useAdminAuth';
 
 export default function AdminDashboardPage() {
   const router = useRouter();
-  const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState(true);
+  // Check authentication + auto-logout after 8 hours of inactivity
+  const { user, loading, logout: handleLogout } = useAdminAuth();
   const { games, loading: gamesLoading } = useAllGames();
-
-  // Track admin activity and auto-logout after 8 hours of inactivity
-  useAdminActivity();
-
-  // Check authentication
-  useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
-      if (currentUser) {
-        setUser(currentUser);
-      } else {
-        router.push('/admin/login');
-      }
-      setLoading(false);
-    });
-
-    return () => unsubscribe();
-  }, [router]);
-
-  // Handle logout
-  const handleLogout = async () => {
-    try {
-      await signOut(auth);
-      router.push('/admin/login');
-    } catch (error) {
-      console.error('Error logging out:', error);
-    }
-  };
 
   // Navigate to game admin page
   const handleGameClick = (gameId: string) => {

@@ -7,8 +7,8 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { doc, onSnapshot, DocumentData } from 'firebase/firestore';
-import { db } from '@/lib/firebase/config';
+import { onSnapshot, DocumentData } from 'firebase/firestore';
+import { roomRef as getRoomRef } from '@/lib/firebase/refs';
 import { Room } from '@/types';
 
 interface UseRoomResult {
@@ -30,7 +30,7 @@ export function useRoom(roomId: string): UseRoomResult {
     }
 
     // Reference to room document
-    const roomRef = doc(db, 'rooms', roomId);
+    const roomRef = getRoomRef(roomId);
 
     // Subscribe to real-time updates
     const unsubscribe = onSnapshot(

@@ -7,6 +7,9 @@ const AGE_STORAGE_KEY = 'user_age';
 const AGE_TIMESTAMP_KEY = 'user_age_timestamp';
 const AGE_VALIDITY_DAYS = 30; // อายุข้อมูลหมดอายุใน 30 วัน
 
+/** key ทั้งหมดของข้อมูลอายุใน localStorage */
+export const AGE_STORAGE_KEYS = [AGE_STORAGE_KEY, AGE_TIMESTAMP_KEY] as const;
+
 export interface AgeData {
   age: string; // เปลี่ยนเป็น string เพื่อรองรับ age range เช่น "18-24"
   timestamp: number;

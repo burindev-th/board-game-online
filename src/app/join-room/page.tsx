@@ -5,6 +5,9 @@ import { Alert, Button, Input, Text } from "@/components/ui";
 
 import RoomEntryLayout from "@/components/rooms/RoomEntryLayout";
 import { formatRoomCode, ROOM_CODE_LENGTH } from "@/lib/utils/roomCode";
+import { getPlayerNameError, PLAYER_NAME_MAX_LENGTH } from "@/lib/utils/playerName";
+import { resetStorageKeepingAge, savePlayerSession } from "@/lib/utils/playerSession";
+import { fetchJson } from "@/lib/utils/apiClient";
 import { FaArrowRight } from "react-icons/fa6";
 
 // API Response Types
@@ -57,13 +60,7 @@ export default function JoinRoomPage() {
     setFormData({ ...formData, playerName: value });
 
     // Validation
-    if (value.length === 0) {
-      setErrors({ ...errors, playerName: "กรุณากรอกชื่อผู้เล่น" });
-    } else if (value.length > 20) {
-      setErrors({ ...errors, playerName: "ชื่อต้องไม่เกิน 20 ตัวอักษร" });
-    } else {
-      setErrors({ ...errors, playerName: "" });
-    }
+    setErrors({ ...errors, playerName: getPlayerNameError(value) });
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -78,42 +75,26 @@ export default function JoinRoomPage() {
       return;
     }
 
-    if (!formData.playerName.trim()) {
-      setErrors({ ...errors, playerName: "กรุณากรอกชื่อผู้เล่น" });
-      return;
-    }
-
-    if (formData.playerName.length > 20) {
-      setErrors({ ...errors, playerName: "ชื่อต้องไม่เกิน 20 ตัวอักษร" });
+    const playerNameError = getPlayerNameError(formData.playerName);
+    if (playerNameError) {
+      setErrors({ ...errors, playerName: playerNameError });
       return;
     }
 
     // IMPORTANT: Clear ALL localStorage BEFORE joining to prevent stale data
     // BUT preserve user age data so they don't have to re-enter it
     console.log("🗑️ Clearing all localStorage before joining...");
-    const savedAge = localStorage.getItem("user_age");
-    const savedAgeTimestamp = localStorage.getItem("user_age_timestamp");
-    localStorage.clear();
-    if (savedAge) localStorage.setItem("user_age", savedAge);
-    if (savedAgeTimestamp) localStorage.setItem("user_age_timestamp", savedAgeTimestamp);
+    resetStorageKeepingAge();
 
     // Start loading
     setIsLoading(true);
 
     try {
       // Call API
-      const response = await fetch("/api/rooms/join", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          code: formData.roomCode,
-          playerName: formData.playerName.trim(),
-        }),
+      const { data } = await fetchJson<JoinRoomResponse>("/api/rooms/join", {
+        code: formData.roomCode,
+        playerName: formData.playerName.trim(),
       });
-
-      const data: JoinRoomResponse = await response.json();
 
       if (data.success && data.roomId && data.playerId) {
         // Success!
@@ -124,8 +105,7 @@ export default function JoinRoomPage() {
         });
 
         // Save NEW playerId to localStorage
-        localStorage.setItem("playerId", data.playerId);
-        localStorage.setItem(`room_${data.roomId}_playerId`, data.playerId);
+        savePlayerSession(data.roomId, data.playerId);
 
         console.log("💾 Saved new playerId to localStorage:", data.playerId);
 
@@ -188,12 +168,12 @@ export default function JoinRoomPage() {
             value={formData.playerName}
             onChange={handlePlayerNameChange}
             placeholder="ใส่ชื่อของคุณ"
-            maxLength={20}
+            maxLength={PLAYER_NAME_MAX_LENGTH}
             disabled={isLoading}
             error={errors.playerName || undefined}
           />
           <Text variant="caption" tone="subtle" className="mt-1.5 text-right">
-            {formData.playerName.length}/20
+            {formData.playerName.length}/{PLAYER_NAME_MAX_LENGTH}
           </Text>
         </div>
 

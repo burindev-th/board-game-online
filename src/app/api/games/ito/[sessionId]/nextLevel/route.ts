@@ -4,9 +4,10 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
+import { apiError, apiServerError } from '@/lib/api/response';
 import { startNextLevel } from '@/lib/firebase/ito';
-import { getDoc, doc, collection, getDocs } from 'firebase/firestore';
-import { db } from '@/lib/firebase/config';
+import { getDoc, getDocs } from 'firebase/firestore';
+import { gameSessionRef, sessionSubcollectionRef } from '@/lib/firebase/refs';
 
 export async function POST(
   request: NextRequest,
@@ -15,26 +16,18 @@ export async function POST(
   try {
     const { sessionId } = await context.params;
 
-
     // 1. Get current game state
-    const sessionRef = doc(db, 'game_sessions', sessionId);
-    const sessionSnap = await getDoc(sessionRef);
+    const sessionSnap = await getDoc(gameSessionRef(sessionId));
 
     if (!sessionSnap.exists()) {
-      return NextResponse.json(
-        { success: false, error: 'Game not found' },
-        { status: 404 }
-      );
+      return apiError('Game not found', 404);
     }
 
     const gameState = sessionSnap.data();
     const roomId = gameState.roomId;
 
     if (!roomId) {
-      return NextResponse.json(
-        { success: false, error: 'Room ID not found in game state' },
-        { status: 400 }
-      );
+      return apiError('Room ID not found in game state', 400);
     }
 
     // คำนวณ level ถัดไป
@@ -42,22 +35,16 @@ export async function POST(
 
     // Guard: ตรวจสอบว่าเกินจำนวน level แล้วหรือไม่
     if (nextLevel > 3) {
-      return NextResponse.json(
-        { success: false, error: 'All levels completed' },
-        { status: 400 }
-      );
+      return apiError('All levels completed', 400);
     }
 
     // Guard: ตรวจสอบว่า phase ถูกต้องหรือไม่ (ต้องเป็น levelComplete)
     if (gameState.phase !== 'levelComplete') {
-      return NextResponse.json(
-        { success: false, error: `Cannot start next level from phase: ${gameState.phase}` },
-        { status: 400 }
-      );
+      return apiError(`Cannot start next level from phase: ${gameState.phase}`, 400);
     }
 
     // 2. Get player list from existing answers
-    const answersRef = collection(db, `game_sessions/${sessionId}/player_answers`);
+    const answersRef = sessionSubcollectionRef(sessionId, 'player_answers');
     const answersSnap = await getDocs(answersRef);
 
     const playerIds: string[] = [];
@@ -89,19 +76,9 @@ export async function POST(
         level: nextLevel
       });
     } else {
-      return NextResponse.json(
-        { success: false, error: 'Failed to start next level' },
-        { status: 500 }
-      );
+      return apiError('Failed to start next level', 500);
     }
   } catch (error) {
-    return NextResponse.json(
-      {
-        success: false,
-        error: 'เกิดข้อผิดพลาด',
-        details: error instanceof Error ? error.message : 'Unknown error',
-      },
-      { status: 500 }
-    );
+    return apiServerError('เกิดข้อผิดพลาด', error);
   }
 }

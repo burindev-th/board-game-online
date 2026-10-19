@@ -3,6 +3,9 @@
  * Central location for all ITO game-related constants
  */
 
+/** Document ID ของเกม ITO ใน games collection */
+export const ITO_GAME_ID = 'BWLxJkh45e6RiALRBmcl';
+
 export const ITO_GAME_CONFIG = {
   MAX_HEARTS: 3,
   MIN_NUMBER: 1,

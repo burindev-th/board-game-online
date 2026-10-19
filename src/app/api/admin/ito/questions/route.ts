@@ -7,6 +7,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { collection, getDocs, addDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '@/lib/firebase/config';
+import { apiAdminError } from '@/lib/api/response';
+import { validateQuestionText, validationError } from './validation';
 
 /**
  * GET /api/admin/ito/questions
@@ -29,14 +31,7 @@ export async function GET() {
     });
   } catch (error) {
     console.error('❌ Error fetching questions:', error);
-    return NextResponse.json(
-      {
-        success: false,
-        error: 'Failed to fetch questions',
-        message: error instanceof Error ? error.message : 'Unknown error',
-      },
-      { status: 500 }
-    );
+    return apiAdminError('Failed to fetch questions', error);
   }
 }
 
@@ -56,50 +51,17 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
 
     // Validation - questionsTH (required)
-    if (!body.questionsTH || typeof body.questionsTH !== 'string') {
-      return NextResponse.json(
-        {
-          success: false,
-          error: 'Validation failed',
-          message: 'questionsTH is required and must be a string',
-        },
-        { status: 400 }
-      );
-    }
-
-    if (body.questionsTH.trim().length === 0) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: 'Validation failed',
-          message: 'questionsTH cannot be empty',
-        },
-        { status: 400 }
-      );
-    }
+    const invalid = validateQuestionText(body.questionsTH);
+    if (invalid) return invalid;
 
     // Validation - isActive (optional)
     if (body.isActive !== undefined && typeof body.isActive !== 'boolean') {
-      return NextResponse.json(
-        {
-          success: false,
-          error: 'Validation failed',
-          message: 'isActive must be a boolean',
-        },
-        { status: 400 }
-      );
+      return validationError('isActive must be a boolean');
     }
 
     // Validation - createdBy (optional)
     if (body.createdBy !== undefined && typeof body.createdBy !== 'string') {
-      return NextResponse.json(
-        {
-          success: false,
-          error: 'Validation failed',
-          message: 'createdBy must be a string',
-        },
-        { status: 400 }
-      );
+      return validationError('createdBy must be a string');
     }
 
     // Prepare data with defaults
@@ -130,13 +92,6 @@ export async function POST(request: NextRequest) {
     );
   } catch (error) {
     console.error('❌ Error creating question:', error);
-    return NextResponse.json(
-      {
-        success: false,
-        error: 'Failed to create question',
-        message: error instanceof Error ? error.message : 'Unknown error',
-      },
-      { status: 500 }
-    );
+    return apiAdminError('Failed to create question', error);
   }
 }

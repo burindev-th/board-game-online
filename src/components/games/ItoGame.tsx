@@ -6,8 +6,6 @@
 "use client";
 
 import { useState, useEffect, useRef, useCallback } from "react";
-import { doc, updateDoc, serverTimestamp } from "firebase/firestore";
-import { db } from "@/lib/firebase/config";
 import { useItoGame } from "@/lib/hooks/useItoGame";
 import { useVotes } from "@/lib/hooks/useVotes";
 import { useReadyStatus } from "@/lib/hooks/useReadyStatus";
@@ -16,7 +14,11 @@ import {
   unsendPlayerAnswer,
   submitVote,
   startVotingPhase,
+  updateSessionPhase,
 } from "@/lib/firebase/ito";
+import { getUniquePlayerIds } from "@/lib/utils/playerStatusUtils";
+import { createAnswerId, parseAnswerId } from "@/lib/utils/voteUtils";
+import { requestJson } from "@/lib/utils/apiClient";
 
 // Components
 import { Spinner } from "@/components/ui";
@@ -63,21 +65,26 @@ export default function ItoGame({ sessionId, playerId }: ItoGameProps) {
   const hasLoadedVotesRef = useRef<boolean>(false);
   const mountTimeRef = useRef<number>(Date.now());
 
+  // ค่า primitive สำหรับ effect deps (gameState เป็น object ใหม่ทุก snapshot)
+  const currentLevel = gameState?.currentLevel;
+  const phase = gameState?.phase;
+  const phaseEndTimeMs = gameState?.phaseEndTime?.getTime();
+
   // Clear answers when level changes
   useEffect(() => {
-    if (!gameState) return;
+    if (currentLevel === undefined) return;
 
     if (prevLevelRef.current === 0) {
-      prevLevelRef.current = gameState.currentLevel;
+      prevLevelRef.current = currentLevel;
       return;
     }
 
-    if (prevLevelRef.current !== gameState.currentLevel) {
+    if (prevLevelRef.current !== currentLevel) {
       setAnswers({});
       prevAnswersRef.current = "";
-      prevLevelRef.current = gameState.currentLevel;
+      prevLevelRef.current = currentLevel;
     }
-  }, [gameState?.currentLevel]);
+  }, [currentLevel]);
 
   // Auto-fill answers if already submitted
   useEffect(() => {
@@ -127,9 +134,7 @@ export default function ItoGame({ sessionId, playerId }: ItoGameProps) {
     if (!gameState || gameState.phase !== "writing") return;
     if (playerAnswers.length === 0) return;
 
-    const uniquePlayerIds = Array.from(
-      new Set(playerAnswers.map((a) => a.playerId))
-    );
+    const uniquePlayerIds = getUniquePlayerIds(playerAnswers);
     const expectedAnswersPerPlayer = gameState.currentLevel;
     const totalExpectedAnswers = uniquePlayerIds.length * expectedAnswersPerPlayer;
 
@@ -144,10 +149,8 @@ export default function ItoGame({ sessionId, playerId }: ItoGameProps) {
       // เรียก API เพื่อเริ่ม Voting Phase พร้อม timer
       const startVoting = async () => {
         try {
-          const response = await fetch(`/api/games/ito/${sessionId}/startVoting`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ roomId: gameState.roomId }),
+          const response = await requestJson(`/api/games/ito/${sessionId}/startVoting`, {
+            roomId: gameState.roomId,
           });
 
           if (!response.ok) {
@@ -198,8 +201,7 @@ export default function ItoGame({ sessionId, playerId }: ItoGameProps) {
   const handleSubmitVote = async () => {
     if (!selectedAnswerId || submitting) return;
 
-    const [votedPlayerId, answerIndexStr] = selectedAnswerId.split("_");
-    const answerIndex = parseInt(answerIndexStr, 10);
+    const { playerId: votedPlayerId, answerIndex } = parseAnswerId(selectedAnswerId);
 
     setSubmitting(true);
     const success = await submitVote(
@@ -222,9 +224,7 @@ export default function ItoGame({ sessionId, playerId }: ItoGameProps) {
 
     setRevealing(true);
     try {
-      await fetch(`/api/games/ito/${sessionId}/reveal`, {
-        method: "POST",
-      });
+      await requestJson(`/api/games/ito/${sessionId}/reveal`);
     } catch (error) {
       console.error('Reveal error:', error);
     } finally {
@@ -249,7 +249,7 @@ export default function ItoGame({ sessionId, playerId }: ItoGameProps) {
     const myVote = votes.find((v) => v.playerId === playerId);
 
     if (myVote && !selectedAnswerId) {
-      const restoredAnswerId = `${myVote.votedForPlayerId}_${myVote.votedForAnswerIndex}`;
+      const restoredAnswerId = createAnswerId(myVote.votedForPlayerId, myVote.votedForAnswerIndex);
       setSelectedAnswerId(restoredAnswerId);
     }
   }, [votes, gameState, playerId, selectedAnswerId]);
@@ -270,7 +270,7 @@ export default function ItoGame({ sessionId, playerId }: ItoGameProps) {
     }
 
     // Count players and validate game state
-    const uniquePlayerIds = Array.from(new Set(playerAnswers.map((a) => a.playerId)));
+    const uniquePlayerIds = getUniquePlayerIds(playerAnswers);
     const totalPlayers = uniquePlayerIds.length;
     const expectedAnswersPerPlayer = gameState.currentLevel;
 
@@ -327,21 +327,20 @@ export default function ItoGame({ sessionId, playerId }: ItoGameProps) {
 
   // Count remaining time (เฉพาะ Voting Phase เท่านั้น)
   useEffect(() => {
-    if (!gameState || !gameState.phaseEndTime) {
+    if (phaseEndTimeMs === undefined) {
       setTimeLeft(0);
       return;
     }
 
     // ไม่แสดง timer ใน Writing Phase
-    if (gameState.phase === "writing") {
+    if (phase === "writing") {
       setTimeLeft(0);
       return;
     }
 
     const interval = setInterval(() => {
       const now = Date.now();
-      const end = gameState.phaseEndTime!.getTime();
-      const diff = Math.max(0, Math.floor((end - now) / 1000));
+      const diff = Math.max(0, Math.floor((phaseEndTimeMs - now) / 1000));
       setTimeLeft(diff);
 
       if (diff === 0) {
@@ -350,32 +349,20 @@ export default function ItoGame({ sessionId, playerId }: ItoGameProps) {
     }, 1000);
 
     return () => clearInterval(interval);
-  }, [gameState?.phaseEndTime, gameState?.phase]);
+  }, [phaseEndTimeMs, phase]);
 
   // Auto-transition from reveal phase
   useEffect(() => {
     if (!gameState || gameState.phase !== "reveal") return;
 
     const timer = setTimeout(async () => {
-      const sessionRef = doc(db, "game_sessions", sessionId);
       const allRevealedInLevel =
         gameState.revealedNumbers.length >= gameState.totalRounds;
 
-      if (gameState.status === "lost") {
-        await updateDoc(sessionRef, {
-          phase: "finished",
-          updatedAt: serverTimestamp(),
-        });
-      } else if (gameState.status === "won") {
-        await updateDoc(sessionRef, {
-          phase: "finished",
-          updatedAt: serverTimestamp(),
-        });
+      if (gameState.status === "lost" || gameState.status === "won") {
+        await updateSessionPhase(sessionId, "finished");
       } else if (allRevealedInLevel) {
-        await updateDoc(sessionRef, {
-          phase: "levelComplete",
-          updatedAt: serverTimestamp(),
-        });
+        await updateSessionPhase(sessionId, "levelComplete");
       } else {
         await startVotingPhase(sessionId, gameState.roomId);
       }
@@ -389,10 +376,7 @@ export default function ItoGame({ sessionId, playerId }: ItoGameProps) {
     if (!gameState || gameState.phase !== "levelComplete") return;
 
     const checkReady = async () => {
-      const uniquePlayerIds = Array.from(
-        new Set(playerAnswers.map((a) => a.playerId))
-      );
-      const totalPlayers = uniquePlayerIds.length;
+      const totalPlayers = getUniquePlayerIds(playerAnswers).length;
 
       if (readyCount === totalPlayers && totalPlayers > 0) {
         try {
@@ -401,22 +385,12 @@ export default function ItoGame({ sessionId, playerId }: ItoGameProps) {
 
           // All levels completed - finish game
           if (gameState.currentLevel >= gameState.totalLevels) {
-            const sessionRef = doc(db, "game_sessions", sessionId);
-            await updateDoc(sessionRef, {
-              phase: "finished",
-              status: "won",
-              updatedAt: serverTimestamp(),
-            });
+            await updateSessionPhase(sessionId, "finished", { status: "won" });
             return;
           }
 
           // Start next level
-          const response = await fetch(
-            `/api/games/ito/${sessionId}/nextLevel`,
-            {
-              method: "POST",
-            }
-          );
+          const response = await requestJson(`/api/games/ito/${sessionId}/nextLevel`);
 
           if (!response.ok) {
             const result = await response.json();

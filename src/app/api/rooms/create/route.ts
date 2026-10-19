@@ -8,7 +8,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { collection, doc, setDoc, serverTimestamp, getDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase/config';
+import { gameRef, roomPlayersRef } from '@/lib/firebase/refs';
+import { createPlayerData } from '@/lib/firebase/firestore';
+import { apiError, apiServerError } from '@/lib/api/response';
 import { generateRoomCode } from '@/lib/utils/roomCode';
+import { getPlayerNameApiError } from '@/lib/utils/playerName';
 
 export async function POST(request: NextRequest) {
   try {
@@ -17,44 +21,21 @@ export async function POST(request: NextRequest) {
     const { playerName, gameId, maxPlayers, timeLimit } = body;
 
     // Validation - Player Name
-    if (!playerName || typeof playerName !== 'string') {
-      return NextResponse.json(
-        { success: false, error: 'กรุณากรอกชื่อผู้เล่น' },
-        { status: 400 }
-      );
-    }
-
-    if (playerName.trim().length === 0) {
-      return NextResponse.json(
-        { success: false, error: 'ชื่อผู้เล่นไม่สามารถว่างได้' },
-        { status: 400 }
-      );
-    }
-
-    if (playerName.length > 20) {
-      return NextResponse.json(
-        { success: false, error: 'ชื่อผู้เล่นต้องไม่เกิน 20 ตัวอักษร' },
-        { status: 400 }
-      );
+    const playerNameError = getPlayerNameApiError(playerName);
+    if (playerNameError) {
+      return apiError(playerNameError, 400);
     }
 
     // Validation - Game ID
     if (!gameId || typeof gameId !== 'string') {
-      return NextResponse.json(
-        { success: false, error: 'กรุณาเลือกเกม' },
-        { status: 400 }
-      );
+      return apiError('กรุณาเลือกเกม', 400);
     }
 
     // Fetch game details to validate maxPlayers
-    const gameRef = doc(db, 'games', gameId);
-    const gameSnap = await getDoc(gameRef);
+    const gameSnap = await getDoc(gameRef(gameId));
 
     if (!gameSnap.exists()) {
-      return NextResponse.json(
-        { success: false, error: 'ไม่พบเกมที่เลือก' },
-        { status: 404 }
-      );
+      return apiError('ไม่พบเกมที่เลือก', 404);
     }
 
     const gameData = gameSnap.data();
@@ -65,20 +46,11 @@ export async function POST(request: NextRequest) {
 
     // Validation - Max Players
     if (!maxPlayers || typeof maxPlayers !== 'number') {
-      return NextResponse.json(
-        { success: false, error: 'กรุณาระบุจำนวนผู้เล่นสูงสุด' },
-        { status: 400 }
-      );
+      return apiError('กรุณาระบุจำนวนผู้เล่นสูงสุด', 400);
     }
 
     if (maxPlayers < minPlayers || maxPlayers > maxPlayersAllowed) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: `จำนวนผู้เล่นต้องอยู่ระหว่าง ${minPlayers}-${maxPlayersAllowed} คน สำหรับเกมนี้`
-        },
-        { status: 400 }
-      );
+      return apiError(`จำนวนผู้เล่นต้องอยู่ระหว่าง ${minPlayers}-${maxPlayersAllowed} คน สำหรับเกมนี้`, 400);
     }
 
     // Validation - Time Limit (if provided)
@@ -86,17 +58,11 @@ export async function POST(request: NextRequest) {
     if (timeLimit !== undefined && timeLimit !== null) {
       // Only validate if game supports custom time
       if (!enableCustomTime) {
-        return NextResponse.json(
-          { success: false, error: 'เกมนี้ไม่รองรับการกำหนดเวลาเอง' },
-          { status: 400 }
-        );
+        return apiError('เกมนี้ไม่รองรับการกำหนดเวลาเอง', 400);
       }
 
       if (typeof timeLimit !== 'number' || timeLimit < 1 || timeLimit > 120) {
-        return NextResponse.json(
-          { success: false, error: 'เวลาเล่นต้องอยู่ระหว่าง 1-120 นาที' },
-          { status: 400 }
-        );
+        return apiError('เวลาเล่นต้องอยู่ระหว่าง 1-120 นาที', 400);
       }
 
       finalTimeLimit = timeLimit;
@@ -114,7 +80,7 @@ export async function POST(request: NextRequest) {
     const roomId = roomDoc.id;
 
     // Create player document
-    const playersRef = collection(db, `rooms/${roomId}/players`);
+    const playersRef = roomPlayersRef(roomId);
     const playerDoc = doc(playersRef);
     const playerId = playerDoc.id;
 
@@ -134,14 +100,7 @@ export async function POST(request: NextRequest) {
     };
 
     // Player data
-    const playerData = {
-      id: playerId,
-      name: playerName.trim(),
-      isHost: true,
-      isReady: false,
-      isOnline: true,
-      joinedAt: serverTimestamp(),
-    };
+    const playerData = createPlayerData(playerId, playerName, true);
 
     // Save to Firestore
     await setDoc(roomDoc, roomData);
@@ -157,14 +116,6 @@ export async function POST(request: NextRequest) {
 
   } catch (error) {
     console.error('Error creating room:', error);
-
-    return NextResponse.json(
-      {
-        success: false,
-        error: 'เกิดข้อผิดพลาดในการสร้างห้อง กรุณาลองใหม่อีกครั้ง',
-        details: error instanceof Error ? error.message : 'Unknown error'
-      },
-      { status: 500 }
-    );
+    return apiServerError('เกิดข้อผิดพลาดในการสร้างห้อง กรุณาลองใหม่อีกครั้ง', error);
   }
 }

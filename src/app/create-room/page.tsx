@@ -11,6 +11,9 @@ import { Alert, Button } from "@/components/ui";
 
 import RoomEntryLayout from "@/components/rooms/RoomEntryLayout";
 import { FaArrowRight } from "react-icons/fa6";
+import { getPlayerNameError } from "@/lib/utils/playerName";
+import { resetStorageKeepingAge, savePlayerSession } from "@/lib/utils/playerSession";
+import { fetchJson } from "@/lib/utils/apiClient";
 
 // API Response Types
 interface CreateRoomResponse {
@@ -73,13 +76,7 @@ export default function CreateRoomPage() {
     setFormData({ ...formData, playerName: value });
 
     // Validation
-    if (value.length === 0) {
-      setErrors({ ...errors, playerName: "กรุณากรอกชื่อผู้เล่น" });
-    } else if (value.length > 20) {
-      setErrors({ ...errors, playerName: "ชื่อต้องไม่เกิน 20 ตัวอักษร" });
-    } else {
-      setErrors({ ...errors, playerName: "" });
-    }
+    setErrors({ ...errors, playerName: getPlayerNameError(value) });
   };
 
   const handleGameChange = (gameId: string) => {
@@ -108,13 +105,9 @@ export default function CreateRoomPage() {
     setApiError(null);
 
     // Validation - Player Name
-    if (!formData.playerName.trim()) {
-      setErrors({ ...errors, playerName: "กรุณากรอกชื่อผู้เล่น" });
-      return;
-    }
-
-    if (formData.playerName.length > 20) {
-      setErrors({ ...errors, playerName: "ชื่อต้องไม่เกิน 20 ตัวอักษร" });
+    const playerNameError = getPlayerNameError(formData.playerName);
+    if (playerNameError) {
+      setErrors({ ...errors, playerName: playerNameError });
       return;
     }
 
@@ -127,31 +120,19 @@ export default function CreateRoomPage() {
     // IMPORTANT: Clear ALL localStorage BEFORE creating room to prevent stale data
     // BUT preserve user age data so they don't have to re-enter it
     console.log("🗑️ Clearing all localStorage before creating room...");
-    const savedAge = localStorage.getItem("user_age");
-    const savedAgeTimestamp = localStorage.getItem("user_age_timestamp");
-    localStorage.clear();
-    if (savedAge) localStorage.setItem("user_age", savedAge);
-    if (savedAgeTimestamp) localStorage.setItem("user_age_timestamp", savedAgeTimestamp);
+    resetStorageKeepingAge();
 
     // Start loading
     setIsLoading(true);
 
     try {
       // Call API
-      const response = await fetch("/api/rooms/create", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          playerName: formData.playerName.trim(),
-          gameId: formData.gameId,
-          maxPlayers: formData.maxPlayers,
-          timeLimit: selectedGame?.enableCustomTime ? formData.timeLimit : undefined,
-        }),
+      const { data } = await fetchJson<CreateRoomResponse>("/api/rooms/create", {
+        playerName: formData.playerName.trim(),
+        gameId: formData.gameId,
+        maxPlayers: formData.maxPlayers,
+        timeLimit: selectedGame?.enableCustomTime ? formData.timeLimit : undefined,
       });
-
-      const data: CreateRoomResponse = await response.json();
 
       if (data.success && data.roomId && data.playerId) {
         // Success!
@@ -162,8 +143,7 @@ export default function CreateRoomPage() {
         });
 
         // Save NEW playerId to localStorage
-        localStorage.setItem("playerId", data.playerId);
-        localStorage.setItem(`room_${data.roomId}_playerId`, data.playerId);
+        savePlayerSession(data.roomId, data.playerId);
 
         console.log("💾 Saved new playerId to localStorage:", data.playerId);
 

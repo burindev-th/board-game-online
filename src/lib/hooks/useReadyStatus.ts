@@ -4,8 +4,8 @@
  */
 
 import { useEffect, useState } from 'react';
-import { collection, onSnapshot, Timestamp } from 'firebase/firestore';
-import { db } from '@/lib/firebase/config';
+import { onSnapshot, Timestamp } from 'firebase/firestore';
+import { sessionSubcollectionRef } from '@/lib/firebase/refs';
 import type { ItoReadyStatus } from '@/types/ito';
 
 interface UseReadyStatusResult {
@@ -24,7 +24,7 @@ export function useReadyStatus(sessionId: string): UseReadyStatusResult {
       return;
     }
 
-    const readyRef = collection(db, `game_sessions/${sessionId}/ready_status`);
+    const readyRef = sessionSubcollectionRef(sessionId, 'ready_status');
 
     const unsubscribe = onSnapshot(
       readyRef,

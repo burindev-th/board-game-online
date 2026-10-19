@@ -1,17 +1,14 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { onAuthStateChanged, signOut, User } from 'firebase/auth';
 import { collection, getDocs, addDoc, updateDoc, deleteDoc, doc, serverTimestamp } from 'firebase/firestore';
-import { auth, db } from '@/lib/firebase/config';
+import { db } from '@/lib/firebase/config';
 import { ItoQuestion } from '@/types/ito';
-import { useAdminActivity } from '@/lib/hooks/useAdminActivity';
+import { useAdminAuth } from '@/lib/hooks/useAdminAuth';
 
 export default function AdminQuestionsPage() {
   const router = useRouter();
-  const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState(true);
   const [questions, setQuestions] = useState<ItoQuestion[]>([]);
   const [showModal, setShowModal] = useState(false);
   const [editingQuestion, setEditingQuestion] = useState<ItoQuestion | null>(null);
@@ -19,23 +16,10 @@ export default function AdminQuestionsPage() {
   const [createdBy, setCreatedBy] = useState('Admin');
   const [submitting, setSubmitting] = useState(false);
 
-  // Track admin activity and auto-logout after 8 hours of inactivity
-  useAdminActivity();
-
-  // Check authentication
-  useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
-      if (currentUser) {
-        setUser(currentUser);
-        loadQuestions();
-      } else {
-        router.push('/admin/login');
-      }
-      setLoading(false);
-    });
-
-    return () => unsubscribe();
-  }, [router]);
+  // Check authentication + auto-logout after 8 hours of inactivity
+  const { user, loading, logout: handleLogout } = useAdminAuth(() => {
+    loadQuestions();
+  });
 
   // Load questions
   const loadQuestions = async () => {
@@ -68,16 +52,6 @@ export default function AdminQuestionsPage() {
     } catch (error) {
       console.error('Error loading questions:', error);
       alert('ไม่สามารถโหลดโจทย์ได้');
-    }
-  };
-
-  // Handle logout
-  const handleLogout = async () => {
-    try {
-      await signOut(auth);
-      router.push('/admin/login');
-    } catch (error) {
-      console.error('Error logging out:', error);
     }
   };
 

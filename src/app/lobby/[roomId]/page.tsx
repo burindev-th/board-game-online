@@ -8,6 +8,9 @@ import { useGames } from "@/lib/hooks/useGames";
 import { Alert, Button, Card, Heading, PageShell, Spinner } from "@/components/ui";
 import LobbyView from "@/components/lobby/LobbyView";
 import { kickPlayer, toggleReady, leaveRoom } from "@/lib/firebase/firestore";
+import { clearRoomPlayerId, getRoomPlayerId } from "@/lib/utils/playerSession";
+import { fetchJson } from "@/lib/utils/apiClient";
+import { getErrorMessage } from "@/lib/utils/error";
 
 interface LobbyPageProps {
   params: Promise<{
@@ -38,7 +41,7 @@ export default function LobbyPage({ params }: LobbyPageProps) {
 
   // Get playerId from localStorage
   useEffect(() => {
-    setPlayerId(localStorage.getItem(`room_${roomId}_playerId`));
+    setPlayerId(getRoomPlayerId(roomId));
   }, [roomId]);
 
   // Redirect to game when room status changes to 'playing'
@@ -69,8 +72,7 @@ export default function LobbyPage({ params }: LobbyPageProps) {
         alert("คุณถูกเตะออกจากห้องแล้ว");
 
         // Clear ALL localStorage related to this player and room
-        localStorage.removeItem(`room_${roomId}_playerId`);
-        localStorage.removeItem("playerId");
+        clearRoomPlayerId(roomId, true);
 
         // Redirect to join page after a short delay
         setTimeout(() => {
@@ -125,8 +127,7 @@ export default function LobbyPage({ params }: LobbyPageProps) {
     action: () => Promise<string | void>,
     {
       keepLoading = false,
-      errorMessage = (error: unknown) =>
-        error instanceof Error ? error.message : "เกิดข้อผิดพลาด",
+      errorMessage = (error: unknown) => getErrorMessage(error, "เกิดข้อผิดพลาด"),
     }: { keepLoading?: boolean; errorMessage?: (error: unknown) => string } = {}
   ) => {
     setActionLoading(true);
@@ -150,16 +151,15 @@ export default function LobbyPage({ params }: LobbyPageProps) {
     body: Record<string, unknown>,
     fallback: string
   ) => {
-    const response = await fetch(`/api/rooms/${roomId}/${path}`, {
-      method,
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(body),
-    });
-    const data = await response.json();
+    const { response, data } = await fetchJson<{ success: boolean; error?: string }>(
+      `/api/rooms/${roomId}/${path}`,
+      body,
+      method
+    );
 
     if (!data.success) {
       console.error(`Room API ${path} error:`, { status: response.status, data });
-      return (data.error as string | undefined) || fallback;
+      return data.error || fallback;
     }
   };
 

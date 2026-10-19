@@ -8,11 +8,19 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { doc, getDoc, updateDoc, deleteDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '@/lib/firebase/config';
+import { apiAdminError, apiError } from '@/lib/api/response';
+import { validateQuestionText } from '../validation';
 
-interface RouteParams {
-  params: {
+interface RouteContext {
+  params: Promise<{
     questionId: string;
-  };
+  }>;
+}
+
+function questionNotFound(questionId: string) {
+  return apiError('Not found', 404, {
+    message: `Question with ID ${questionId} not found`,
+  });
 }
 
 /**
@@ -21,23 +29,16 @@ interface RouteParams {
  */
 export async function GET(
   request: NextRequest,
-  { params }: RouteParams
+  context: RouteContext
 ) {
   try {
-    const { questionId } = params;
+    const { questionId } = await context.params;
 
     const docRef = doc(db, 'ito_questions', questionId);
     const docSnap = await getDoc(docRef);
 
     if (!docSnap.exists()) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: 'Not found',
-          message: `Question with ID ${questionId} not found`,
-        },
-        { status: 404 }
-      );
+      return questionNotFound(questionId);
     }
 
     return NextResponse.json({
@@ -49,14 +50,7 @@ export async function GET(
     });
   } catch (error) {
     console.error('❌ Error fetching question:', error);
-    return NextResponse.json(
-      {
-        success: false,
-        error: 'Failed to fetch question',
-        message: error instanceof Error ? error.message : 'Unknown error',
-      },
-      { status: 500 }
-    );
+    return apiAdminError('Failed to fetch question', error);
   }
 }
 
@@ -71,48 +65,22 @@ export async function GET(
  */
 export async function PUT(
   request: NextRequest,
-  { params }: RouteParams
+  context: RouteContext
 ) {
   try {
-    const { questionId } = params;
+    const { questionId } = await context.params;
     const body = await request.json();
 
     // Validation
-    if (!body.questionsTH || typeof body.questionsTH !== 'string') {
-      return NextResponse.json(
-        {
-          success: false,
-          error: 'Validation failed',
-          message: 'questionsTH is required and must be a string',
-        },
-        { status: 400 }
-      );
-    }
-
-    if (body.questionsTH.trim().length === 0) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: 'Validation failed',
-          message: 'questionsTH cannot be empty',
-        },
-        { status: 400 }
-      );
-    }
+    const invalid = validateQuestionText(body.questionsTH);
+    if (invalid) return invalid;
 
     // Check if question exists
     const docRef = doc(db, 'ito_questions', questionId);
     const docSnap = await getDoc(docRef);
 
     if (!docSnap.exists()) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: 'Not found',
-          message: `Question with ID ${questionId} not found`,
-        },
-        { status: 404 }
-      );
+      return questionNotFound(questionId);
     }
 
     // Update question
@@ -131,14 +99,7 @@ export async function PUT(
     });
   } catch (error) {
     console.error('❌ Error updating question:', error);
-    return NextResponse.json(
-      {
-        success: false,
-        error: 'Failed to update question',
-        message: error instanceof Error ? error.message : 'Unknown error',
-      },
-      { status: 500 }
-    );
+    return apiAdminError('Failed to update question', error);
   }
 }
 
@@ -148,24 +109,17 @@ export async function PUT(
  */
 export async function DELETE(
   request: NextRequest,
-  { params }: RouteParams
+  context: RouteContext
 ) {
   try {
-    const { questionId } = params;
+    const { questionId } = await context.params;
 
     // Check if question exists
     const docRef = doc(db, 'ito_questions', questionId);
     const docSnap = await getDoc(docRef);
 
     if (!docSnap.exists()) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: 'Not found',
-          message: `Question with ID ${questionId} not found`,
-        },
-        { status: 404 }
-      );
+      return questionNotFound(questionId);
     }
 
     // Delete question
@@ -180,13 +134,6 @@ export async function DELETE(
     });
   } catch (error) {
     console.error('❌ Error deleting question:', error);
-    return NextResponse.json(
-      {
-        success: false,
-        error: 'Failed to delete question',
-        message: error instanceof Error ? error.message : 'Unknown error',
-      },
-      { status: 500 }
-    );
+    return apiAdminError('Failed to delete question', error);
   }
 }

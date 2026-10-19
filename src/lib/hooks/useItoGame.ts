@@ -4,8 +4,8 @@
  */
 
 import { useEffect, useState } from 'react';
-import { doc, collection, onSnapshot, Timestamp } from 'firebase/firestore';
-import { db } from '@/lib/firebase/config';
+import { onSnapshot, Timestamp } from 'firebase/firestore';
+import { gameSessionRef, sessionSubcollectionRef } from '@/lib/firebase/refs';
 import type { ItoGameState, ItoPlayerAnswer } from '@/types/ito';
 
 interface UseItoGameResult {
@@ -27,7 +27,7 @@ export function useItoGame(sessionId: string, playerId: string | null): UseItoGa
       return;
     }
 
-    const sessionRef = doc(db, 'game_sessions', sessionId);
+    const sessionRef = gameSessionRef(sessionId);
 
     const unsubscribe = onSnapshot(
       sessionRef,
@@ -76,7 +76,7 @@ export function useItoGame(sessionId: string, playerId: string | null): UseItoGa
   useEffect(() => {
     if (!sessionId) return;
 
-    const answersRef = collection(db, `game_sessions/${sessionId}/player_answers`);
+    const answersRef = sessionSubcollectionRef(sessionId, 'player_answers');
 
     const unsubscribe = onSnapshot(
       answersRef,

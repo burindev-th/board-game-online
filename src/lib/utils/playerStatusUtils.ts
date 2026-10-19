@@ -19,25 +19,42 @@ export interface PlayerSubmissionStatus {
 }
 
 /**
- * คำนวณสถานะการส่งคำใบ้ของผู้เล่น
+ * รายชื่อ playerId ที่ไม่ซ้ำกัน เรียงตามลำดับที่พบครั้งแรก
  */
-export function calculatePlayerSubmissionStatus(
-  playerAnswers: ItoPlayerAnswer[],
-  expectedAnswersPerPlayer: number
-): PlayerSubmissionStatus {
-  const uniquePlayerIds = Array.from(
-    new Set(playerAnswers.map((a) => a.playerId))
-  );
+export function getUniquePlayerIds(playerAnswers: { playerId: string }[]): string[] {
+  return Array.from(new Set(playerAnswers.map((a) => a.playerId)));
+}
 
+/**
+ * map ของ playerId → playerName (ใช้ชื่อแรกที่พบของแต่ละคน)
+ */
+export function getPlayerNameMap(
+  playerAnswers: { playerId: string; playerName: string }[]
+): Record<string, string> {
+  const playerNames: Record<string, string> = {};
+  playerAnswers.forEach((a) => {
+    if (!playerNames[a.playerId]) {
+      playerNames[a.playerId] = a.playerName;
+    }
+  });
+  return playerNames;
+}
+
+/**
+ * นับจำนวนคำตอบที่ "เสร็จแล้ว" ของผู้เล่นแต่ละคน ตามเงื่อนไข isDone
+ */
+function buildSubmissionStatus(
+  playerAnswers: ItoPlayerAnswer[],
+  expectedAnswersPerPlayer: number,
+  isDone: (answer: ItoPlayerAnswer) => boolean
+): PlayerSubmissionStatus {
   const playerSubmissionStatus: PlayerSubmissionStatus = {};
 
-  uniquePlayerIds.forEach((id) => {
+  getUniquePlayerIds(playerAnswers).forEach((id) => {
     const playerAnswersForThisPlayer = playerAnswers.filter(
       (a) => a.playerId === id
     );
-    const submittedCount = playerAnswersForThisPlayer.filter(
-      (a) => a.submittedAt
-    ).length;
+    const submittedCount = playerAnswersForThisPlayer.filter(isDone).length;
     const playerName =
       playerAnswersForThisPlayer[0]?.playerName || "Unknown";
 
@@ -52,36 +69,23 @@ export function calculatePlayerSubmissionStatus(
 }
 
 /**
+ * คำนวณสถานะการส่งคำใบ้ของผู้เล่น
+ */
+export function calculatePlayerSubmissionStatus(
+  playerAnswers: ItoPlayerAnswer[],
+  expectedAnswersPerPlayer: number
+): PlayerSubmissionStatus {
+  return buildSubmissionStatus(playerAnswers, expectedAnswersPerPlayer, (a) => Boolean(a.submittedAt));
+}
+
+/**
  * คำนวณสถานะการพิมพ์คำใบ้ของผู้เล่น (voting phase)
  */
 export function calculatePlayerHintStatus(
   playerAnswers: ItoPlayerAnswer[],
   expectedAnswersPerPlayer: number
 ): PlayerSubmissionStatus {
-  const uniquePlayerIds = Array.from(
-    new Set(playerAnswers.map((a) => a.playerId))
-  );
-
-  const playerSubmissionStatus: PlayerSubmissionStatus = {};
-
-  uniquePlayerIds.forEach((id) => {
-    const playerAnswersForThisPlayer = playerAnswers.filter(
-      (a) => a.playerId === id
-    );
-    const submittedCount = playerAnswersForThisPlayer.filter(
-      (a) => a.answer.trim() !== ""
-    ).length;
-    const playerName =
-      playerAnswersForThisPlayer[0]?.playerName || "Unknown";
-
-    playerSubmissionStatus[id] = {
-      playerName,
-      submittedCount,
-      totalExpected: expectedAnswersPerPlayer,
-    };
-  });
-
-  return playerSubmissionStatus;
+  return buildSubmissionStatus(playerAnswers, expectedAnswersPerPlayer, (a) => a.answer.trim() !== "");
 }
 
 /**

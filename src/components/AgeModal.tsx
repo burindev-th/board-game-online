@@ -5,6 +5,7 @@ import { usePathname } from 'next/navigation';
 import { saveAge, shouldAskAge } from '@/lib/utils/ageStorage';
 import { saveAgeToFirebase } from '@/lib/firebase/age';
 import { Alert, Button, Heading, Modal, Text } from '@/components/ui';
+import { getErrorMessage } from '@/lib/utils/error';
 
 const AGE_RANGES = [
   { label: 'ต่ำกว่า 18 ปี', value: '0-17' },
@@ -51,7 +52,7 @@ export default function AgeModal() {
       await new Promise(resolve => setTimeout(resolve, 300));
       setIsOpen(false);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'เกิดข้อผิดพลาด');
+      setError(getErrorMessage(err, 'เกิดข้อผิดพลาด'));
       setIsSubmitting(false);
     }
   };

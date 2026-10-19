@@ -4,6 +4,7 @@
  */
 
 import type { ItoPlayerAnswer, ItoVote } from '@/types/ito';
+import { getUniquePlayerIds } from './playerStatusUtils';
 
 /**
  * Parse answerId string to components
@@ -83,10 +84,7 @@ export function hasAllPlayersVoted(
   voteCount: number,
   playerAnswers: ItoPlayerAnswer[]
 ): boolean {
-  const uniquePlayerIds = Array.from(
-    new Set(playerAnswers.map((a) => a.playerId))
-  );
-  return voteCount === uniquePlayerIds.length && voteCount > 0;
+  return voteCount === getUniquePlayerIds(playerAnswers).length && voteCount > 0;
 }
 
 /**

@@ -1,4 +1,5 @@
 import { ItoGameLog } from "@/lib/hooks/useItoGameLogs";
+import { formatThaiDateTime as formatDate } from "@/lib/utils/date";
 
 interface LogCardsProps {
   logs: ItoGameLog[];
@@ -13,18 +14,6 @@ export function LogCards({
   onEdit,
   onDelete,
 }: LogCardsProps) {
-  const formatDate = (timestamp: any) => {
-    if (!timestamp) return '-';
-    const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
-    return new Intl.DateTimeFormat('th-TH', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-    }).format(date);
-  };
-
   return (
     <div className="md:hidden space-y-4">
       {logs.map((log) => (

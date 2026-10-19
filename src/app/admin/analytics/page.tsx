@@ -1,33 +1,15 @@
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
+import { useMemo } from 'react';
 import { useRouter } from 'next/navigation';
-import { onAuthStateChanged, User } from 'firebase/auth';
-import { auth } from '@/lib/firebase/config';
 import { useUserAnalytics } from '@/lib/hooks/useUserAnalytics';
-import { useAdminActivity } from '@/lib/hooks/useAdminActivity';
+import { useAdminAuth } from '@/lib/hooks/useAdminAuth';
 
 export default function AnalyticsPage() {
   const router = useRouter();
-  const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState(true);
+  // Check authentication + auto-logout after 8 hours of inactivity
+  const { user, loading } = useAdminAuth();
   const { analytics, loading: analyticsLoading } = useUserAnalytics();
-
-  useAdminActivity();
-
-  // Check authentication
-  useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
-      if (currentUser) {
-        setUser(currentUser);
-      } else {
-        router.push('/admin/login');
-      }
-      setLoading(false);
-    });
-
-    return () => unsubscribe();
-  }, [router]);
 
   // คำนวณสถิติ
   const stats = useMemo(() => {

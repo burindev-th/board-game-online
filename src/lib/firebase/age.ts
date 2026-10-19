@@ -7,6 +7,8 @@ import {
   collection,
   addDoc,
   serverTimestamp,
+  FieldValue,
+  Timestamp,
 } from 'firebase/firestore';
 import { db } from './config';
 
@@ -32,7 +34,7 @@ export interface UserAnalytics {
   timezone: string;
 
   // Timestamp
-  timestamp?: any; // serverTimestamp
+  timestamp?: Timestamp | FieldValue; // serverTimestamp
 }
 
 /**

@@ -6,6 +6,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
+import { apiError, apiServerError } from '@/lib/api/response';
 import { startVotingPhase } from '@/lib/firebase/ito';
 
 export async function POST(
@@ -18,20 +19,14 @@ export async function POST(
     const { roomId } = body;
 
     if (!roomId) {
-      return NextResponse.json(
-        { success: false, error: 'roomId is required' },
-        { status: 400 }
-      );
+      return apiError('roomId is required', 400);
     }
 
     // เริ่ม Voting Phase และตั้ง timer
     const success = await startVotingPhase(sessionId, roomId);
 
     if (!success) {
-      return NextResponse.json(
-        { success: false, error: 'Failed to start voting phase' },
-        { status: 500 }
-      );
+      return apiError('Failed to start voting phase', 500);
     }
 
     return NextResponse.json({
@@ -39,13 +34,6 @@ export async function POST(
       message: 'Voting phase started with timer'
     });
   } catch (error) {
-    return NextResponse.json(
-      {
-        success: false,
-        error: 'เกิดข้อผิดพลาด',
-        details: error instanceof Error ? error.message : 'Unknown error',
-      },
-      { status: 500 }
-    );
+    return apiServerError('เกิดข้อผิดพลาด', error);
   }
 }

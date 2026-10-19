@@ -1,12 +1,11 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useRouter, useParams } from "next/navigation";
-import { onAuthStateChanged, User } from "firebase/auth";
-import { auth, db } from "@/lib/firebase/config";
-import { doc, getDoc } from "firebase/firestore";
+import { getDoc } from "firebase/firestore";
+import { gameRef } from "@/lib/firebase/refs";
 import { useItoGameLogs, useItoQuestions } from "@/lib/hooks/useItoGameLogs";
-import { useAdminActivity } from "@/lib/hooks/useAdminActivity";
+import { useAdminAuth } from "@/lib/hooks/useAdminAuth";
 
 // Custom hooks
 import { useLogFilters } from "./hooks/useLogFilters";
@@ -28,48 +27,32 @@ export default function ItoGameLogsPage() {
   const params = useParams();
   const gameId = params?.gameId as string;
 
-  // Auth
-  const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState(true);
   const [gameName, setGameName] = useState<string>("Game");
+
+  // Auth check + auto-logout after 8 hours of inactivity
+  const { user, loading } = useAdminAuth(async () => {
+    // Fetch game name
+    try {
+      const gameSnap = await getDoc(gameRef(gameId));
+      if (gameSnap.exists()) {
+        setGameName(gameSnap.data().name || "Game");
+      }
+    } catch (error) {
+      console.error("Error fetching game:", error);
+    }
+  });
 
   // Data
   const { logs, loading: logsLoading } = useItoGameLogs();
   const { questions, loading: questionsLoading } = useItoQuestions();
 
   // Custom hooks
-  const filters = useLogFilters(logs, questions);
+  const filters = useLogFilters(logs);
   const actions = useLogActions(logs);
 
   // Pagination
   const [displayCount, setDisplayCount] = useState(20);
   const LOAD_MORE_COUNT = 20;
-
-  useAdminActivity();
-
-  // Auth check
-  useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
-      if (currentUser) {
-        setUser(currentUser);
-        // Fetch game name
-        try {
-          const gameRef = doc(db, "games", gameId);
-          const gameSnap = await getDoc(gameRef);
-          if (gameSnap.exists()) {
-            setGameName(gameSnap.data().name || "Game");
-          }
-        } catch (error) {
-          console.error("Error fetching game:", error);
-        }
-      } else {
-        router.push("/admin/login");
-      }
-      setLoading(false);
-    });
-
-    return () => unsubscribe();
-  }, [gameId, router]);
 
   // Calculate statistics
   const testLogsCount = logs.filter(log => log.isTest).length;

@@ -7,6 +7,8 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { updateRoomSettings } from '@/lib/firebase/firestore';
+import { apiError } from '@/lib/api/response';
+import { getErrorMessage } from '@/lib/utils/error';
 
 export async function PATCH(
   request: NextRequest,
@@ -19,18 +21,12 @@ export async function PATCH(
 
     // Validation
     if (!hostId) {
-      return NextResponse.json(
-        { success: false, error: 'Host ID is required' },
-        { status: 400 }
-      );
+      return apiError('Host ID is required', 400);
     }
 
     if (maxPlayers !== undefined) {
       if (typeof maxPlayers !== 'number' || maxPlayers < 2 || maxPlayers > 10) {
-        return NextResponse.json(
-          { success: false, error: 'Max players must be between 2 and 10' },
-          { status: 400 }
-        );
+        return apiError('Max players must be between 2 and 10', 400);
       }
     }
 
@@ -46,13 +42,6 @@ export async function PATCH(
     });
   } catch (error) {
     console.error('Update settings error:', error);
-
-    return NextResponse.json(
-      {
-        success: false,
-        error: error instanceof Error ? error.message : 'Failed to update room settings',
-      },
-      { status: 500 }
-    );
+    return apiError(getErrorMessage(error, 'Failed to update room settings'), 500);
   }
 }

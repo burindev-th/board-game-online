@@ -6,9 +6,10 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
+import { apiError, apiServerError } from '@/lib/api/response';
 import { countVotes, revealAndCheck, getRandomUnrevealedAnswer } from '@/lib/firebase/ito';
-import { getDoc, doc } from 'firebase/firestore';
-import { db } from '@/lib/firebase/config';
+import { getDoc } from 'firebase/firestore';
+import { gameSessionRef } from '@/lib/firebase/refs';
 
 export async function POST(
   request: NextRequest,
@@ -18,23 +19,16 @@ export async function POST(
     const { sessionId } = await context.params;
 
     // Guard: Validate game exists and phase is 'voting'
-    const sessionRef = doc(db, 'game_sessions', sessionId);
-    const sessionSnap = await getDoc(sessionRef);
+    const sessionSnap = await getDoc(gameSessionRef(sessionId));
 
     if (!sessionSnap.exists()) {
-      return NextResponse.json(
-        { success: false, error: 'Game not found' },
-        { status: 404 }
-      );
+      return apiError('Game not found', 404);
     }
 
     const gameState = sessionSnap.data();
 
     if (gameState.phase !== 'voting') {
-      return NextResponse.json(
-        { success: false, error: `Cannot reveal from phase: ${gameState.phase}` },
-        { status: 400 }
-      );
+      return apiError(`Cannot reveal from phase: ${gameState.phase}`, 400);
     }
 
     // Count votes to determine which number to reveal
@@ -45,10 +39,7 @@ export async function POST(
       winner = await getRandomUnrevealedAnswer(sessionId);
 
       if (!winner) {
-        return NextResponse.json(
-          { success: false, error: 'ไม่มีคำตอบที่ยังไม่ถูก reveal' },
-          { status: 400 }
-        );
+        return apiError('ไม่มีคำตอบที่ยังไม่ถูก reveal', 400);
       }
     }
 
@@ -56,21 +47,11 @@ export async function POST(
     const result = await revealAndCheck(sessionId, winner.playerId, winner.answerIndex);
 
     if (!result) {
-      return NextResponse.json(
-        { success: false, error: 'ไม่สามารถเปิดเผยผลได้' },
-        { status: 500 }
-      );
+      return apiError('ไม่สามารถเปิดเผยผลได้', 500);
     }
 
     return NextResponse.json(result);
   } catch (error) {
-    return NextResponse.json(
-      {
-        success: false,
-        error: 'เกิดข้อผิดพลาด',
-        details: error instanceof Error ? error.message : 'Unknown error',
-      },
-      { status: 500 }
-    );
+    return apiServerError('เกิดข้อผิดพลาด', error);
   }
 }

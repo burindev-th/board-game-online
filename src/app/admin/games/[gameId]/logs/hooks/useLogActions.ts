@@ -31,7 +31,7 @@ export function useLogActions(logs: ItoGameLog[]) {
       } else {
         alert('เกิดข้อผิดพลาดในการลบ log');
       }
-    } catch (error) {
+    } catch {
       alert('เกิดข้อผิดพลาดในการลบ log');
     } finally {
       setIsDeleting(false);
@@ -50,7 +50,7 @@ export function useLogActions(logs: ItoGameLog[]) {
       } else {
         alert('เกิดข้อผิดพลาดในการแก้ไขคำตอบ');
       }
-    } catch (error) {
+    } catch {
       alert('เกิดข้อผิดพลาดในการแก้ไขคำตอบ');
     } finally {
       setIsUpdating(false);
@@ -75,7 +75,7 @@ export function useLogActions(logs: ItoGameLog[]) {
       } else {
         alert('เกิดข้อผิดพลาดในการลบ log ทดสอบ');
       }
-    } catch (error) {
+    } catch {
       alert('เกิดข้อผิดพลาดในการลบ log ทดสอบ');
     } finally {
       setIsDeletingTest(false);
