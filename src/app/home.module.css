@@ -9,8 +9,8 @@
 .eyebrow { display: inline-flex; align-items: center; gap: 9px; font: 700 11px var(--font-number), sans-serif; letter-spacing: .13em; }
 .eyebrow > span { width: 9px; height: 9px; background: rgb(var(--color-primary)); border: 1px solid rgb(var(--color-ink)); border-radius: 50%; }
 .title { margin-block: 22px 24px; font: 700 clamp(48px, 5.4vw, 72px)/1.23 var(--font-heading), sans-serif; letter-spacing: -.045em; }
-.highlight { position: relative; display: inline-block; padding-inline: 8px; margin-top: 8px; isolation: isolate; color: rgb(var(--color-on-primary)); }
-.highlight::before { content: ''; position: absolute; inset: 4px -3px 0; z-index: -1; background: rgb(var(--color-primary)); border: 2px solid rgb(var(--color-ink)); transform: rotate(-2deg); box-shadow: 4px 4px 0 rgb(var(--color-ink)); }
+.highlight { position: relative; display: inline-block; padding-inline: 10px; margin: 8px 0 0 .22em; isolation: isolate; color: rgb(var(--color-on-primary)); }
+.highlight::before { content: ''; position: absolute; inset: -.1em -3px .02em; z-index: -1; background: rgb(var(--color-primary)); border: 2px solid rgb(var(--color-ink)); transform: rotate(-2deg); box-shadow: 4px 4px 0 rgb(var(--color-ink)); }
 .description { color: rgb(var(--color-fg-muted)); line-height: 1.85; font-size: 17px; }
 .actions { display: flex; flex-wrap: wrap; gap: 14px; margin-top: 28px; }
 .action { padding-inline: 20px; font-size: 17px; }

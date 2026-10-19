@@ -6,6 +6,7 @@ import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import type { Game, Player, Room } from "@/types";
 import { Alert, Badge, Button, Heading, IconButton, Input, PageShell } from "@/components/ui";
 import { getPlayerColor } from "@/lib/theme/playerColors";
+import { splitRoomCode } from "@/lib/utils/roomCode";
 import styles from "./LobbyView.module.css";
 
 interface LobbyViewProps {
@@ -36,7 +37,10 @@ interface LobbyViewProps {
 
 export default function LobbyView({ room, players, selectedGame, playerId, isHost, canStartGame, minPlayers, copied, busy, error, settings, onCopy, onLeave, onStart, onReady, onKick }: LobbyViewProps) {
   const reduceMotion = useReducedMotion();
-  const currentPlayer = players.find(player => player.id === playerId);
+  const isReady = Boolean(players.find(player => player.id === playerId)?.isReady);
+  const maxAllowedPlayers = selectedGame?.maxPlayer || 10;
+  const settingsValid = Number.isFinite(settings.value) && settings.value >= room.currentPlayers && settings.value <= maxAllowedPlayers;
+  const [codeHead, codeTail] = splitRoomCode(room.code);
   const readyCount = players.filter(player => player.isHost || player.isReady).length;
   const openSeats = Math.max(0, room.maxPlayers - players.length);
   const waitingMessage = room.currentPlayers < minPlayers
@@ -44,6 +48,7 @@ export default function LobbyView({ room, players, selectedGame, playerId, isHos
     : !canStartGame
       ? "รอเพื่อนทุกคนกดพร้อม แล้วเริ่มสนุกได้เลย"
       : isHost ? "ทุกคนพร้อมแล้ว เริ่มความสนุกได้เลย!" : "ทุกคนพร้อมแล้ว รอหัวห้องเริ่มเกม";
+  const playerHint = isReady ? "พร้อมแล้ว รอหัวห้องเริ่มเกม" : "กดพร้อม เพื่อบอกเพื่อนว่าคุณพร้อมเล่น";
 
   return (
     <PageShell width="lg" brandLink={false} className={styles.page} actions={
@@ -59,7 +64,7 @@ export default function LobbyView({ room, players, selectedGame, playerId, isHos
         </div>
         <div className={styles.invite}>
           <div className={styles.ticketLabel}><FaPeopleGroup aria-hidden /><span>รหัสชวนเพื่อน</span><span className={styles.ticketMark}>ROOM PASS</span></div>
-          <span className={styles.code}>{room.code.slice(0, 3)}<span>-</span>{room.code.slice(3)}</span>
+          <span className={styles.code}>{codeHead}<span>-</span>{codeTail}</span>
           <Button variant="outline" size="sm" fullWidth onClick={onCopy} icon={copied ? <LuCheck aria-hidden /> : <LuCopy aria-hidden />}>
             {copied ? "คัดลอกแล้ว! ส่งให้เพื่อนได้เลย" : "คัดลอกรหัสห้อง"}
           </Button>
@@ -79,8 +84,8 @@ export default function LobbyView({ room, players, selectedGame, playerId, isHos
             </div>
           </div>
           {isHost && settings.editing && <div className={styles.settings}>
-            <Input type="number" label="จำนวนผู้เล่นสูงสุด" min={room.currentPlayers} max={selectedGame?.maxPlayer || 10} value={Number.isFinite(settings.value) ? settings.value : ""} onChange={e => settings.onChange(parseInt(e.target.value))} disabled={busy} className="w-24" />
-            <IconButton variant="primary" size="sm" onClick={settings.onSave} disabled={busy || !Number.isFinite(settings.value) || settings.value < room.currentPlayers || settings.value > (selectedGame?.maxPlayer || 10)} label="บันทึก" icon={<LuCheck aria-hidden />} />
+            <Input type="number" label="จำนวนผู้เล่นสูงสุด" min={room.currentPlayers} max={maxAllowedPlayers} value={Number.isFinite(settings.value) ? settings.value : ""} onChange={e => settings.onChange(parseInt(e.target.value))} disabled={busy} className="w-24" />
+            <IconButton variant="primary" size="sm" onClick={settings.onSave} disabled={busy || !settingsValid} label="บันทึก" icon={<LuCheck aria-hidden />} />
             <IconButton variant="outline" size="sm" onClick={settings.onCancel} disabled={busy} label="ยกเลิก" icon={<LuX aria-hidden />} />
           </div>}
           <p className={styles.panelHint}>เช็กชื่อและสถานะความพร้อมก่อนเริ่มเกม</p>
@@ -126,18 +131,18 @@ export default function LobbyView({ room, players, selectedGame, playerId, isHos
           <div className={styles.actionDock}>
             <p className={styles.dockStatus}>
               <strong>{readyCount}/{players.length} คนพร้อม</strong>
-              <span>{isHost ? waitingMessage : currentPlayer?.isReady ? "พร้อมแล้ว รอหัวห้องเริ่มเกม" : "กดพร้อม เพื่อบอกเพื่อนว่าคุณพร้อมเล่น"}</span>
+              <span>{isHost ? waitingMessage : playerHint}</span>
             </p>
             {isHost ? (
               <Button size="lg" fullWidth onClick={onStart} disabled={!canStartGame || busy} loading={busy}>
                 เริ่มเกม<FaArrowRight aria-hidden />
               </Button>
             ) : (
-              <Button variant={currentPlayer?.isReady ? "outline" : "primary"} size="lg" fullWidth onClick={onReady} disabled={busy} loading={busy} icon={<FaCheck aria-hidden />}>
-                {currentPlayer?.isReady ? "ยกเลิกความพร้อม" : "พร้อมเล่นแล้ว!"}
+              <Button variant={isReady ? "outline" : "primary"} size="lg" fullWidth onClick={onReady} disabled={busy} loading={busy} icon={<FaCheck aria-hidden />}>
+                {isReady ? "ยกเลิกความพร้อม" : "พร้อมเล่นแล้ว!"}
               </Button>
             )}
-            <p className={styles.actionHint}>{isHost ? "เมื่อเพื่อนพร้อมครบ หัวห้องกดเริ่มเกมได้เลย" : currentPlayer?.isReady ? "พร้อมแล้ว รอหัวห้องเริ่มเกมได้เลย" : "กดพร้อม เพื่อบอกเพื่อนว่าคุณพร้อมเล่น"}</p>
+            <p className={styles.actionHint}>{isHost ? "เมื่อเพื่อนพร้อมครบ หัวห้องกดเริ่มเกมได้เลย" : playerHint}</p>
           </div>
         </aside>
       </div>

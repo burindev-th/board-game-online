@@ -38,13 +38,7 @@ export default function LobbyPage({ params }: LobbyPageProps) {
 
   // Get playerId from localStorage
   useEffect(() => {
-    const id = localStorage.getItem(`room_${roomId}_playerId`);
-    console.log("🔍 Reading playerId from localStorage:", {
-      roomId,
-      playerId: id,
-      allLocalStorage: { ...localStorage },
-    });
-    setPlayerId(id);
+    setPlayerId(localStorage.getItem(`room_${roomId}_playerId`));
   }, [roomId]);
 
   // Redirect to game when room status changes to 'playing'
@@ -66,19 +60,12 @@ export default function LobbyPage({ params }: LobbyPageProps) {
       return;
     }
 
-    console.log("🔍 Checking player status:", {
-      playerId,
-      playersCount: players.length,
-      playerIds: players.map((p) => p.id),
-    });
-
     // Check if current player exists in players list
     if (playerId) {
       const playerExists = players.some((p) => p.id === playerId);
 
       if (!playerExists && players.length > 0) {
         // Player was kicked! Redirect to join page
-        console.log("⚠️ Player was kicked from room");
         alert("คุณถูกเตะออกจากห้องแล้ว");
 
         // Clear ALL localStorage related to this player and room
@@ -95,7 +82,6 @@ export default function LobbyPage({ params }: LobbyPageProps) {
 
     // If no playerId in localStorage, redirect to join page
     if (!playerId && !playersLoading) {
-      console.log("⚠️ No playerId found, redirecting to join page");
       router.push("/join-room");
     }
   }, [playerId, players, playersLoading, roomId, router]);
@@ -132,149 +118,117 @@ export default function LobbyPage({ params }: LobbyPageProps) {
   const canStartGame =
     room && room.currentPlayers >= minPlayers && allPlayersReady;
 
-  // Handle Kick Player
-  const handleKick = async (playerIdToKick: string, playerName: string) => {
-    const confirmed = confirm(`ต้องการเตะ ${playerName} ออกจากห้องหรือไม่?`);
-
-    if (!confirmed) {
-      return;
-    }
-
+  // Run a lobby action with shared loading/error handling.
+  // keepLoading: leave the spinner on after success (we're navigating away).
+  // Return a string from the action to show it as an error.
+  const runAction = async (
+    action: () => Promise<string | void>,
+    {
+      keepLoading = false,
+      errorMessage = (error: unknown) =>
+        error instanceof Error ? error.message : "เกิดข้อผิดพลาด",
+    }: { keepLoading?: boolean; errorMessage?: (error: unknown) => string } = {}
+  ) => {
     setActionLoading(true);
     setActionError(null);
 
     try {
-      await kickPlayer(roomId, playerIdToKick);
+      const failure = await action();
+      if (failure) setActionError(failure);
+      if (failure || !keepLoading) setActionLoading(false);
     } catch (error) {
-      const errorMsg =
-        error instanceof Error ? error.message : "เกิดข้อผิดพลาด";
-      setActionError(errorMsg);
-      console.error("Kick error:", error);
-    } finally {
+      console.error("Lobby action error:", error);
+      setActionError(errorMessage(error));
       setActionLoading(false);
     }
+  };
+
+  // POST/PATCH to a room API route; resolves to an error message on failure
+  const callRoomApi = async (
+    path: string,
+    method: "POST" | "PATCH",
+    body: Record<string, unknown>,
+    fallback: string
+  ) => {
+    const response = await fetch(`/api/rooms/${roomId}/${path}`, {
+      method,
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    });
+    const data = await response.json();
+
+    if (!data.success) {
+      console.error(`Room API ${path} error:`, { status: response.status, data });
+      return (data.error as string | undefined) || fallback;
+    }
+  };
+
+  // Handle Kick Player
+  const handleKick = async (playerIdToKick: string, playerName: string) => {
+    if (!confirm(`ต้องการเตะ ${playerName} ออกจากห้องหรือไม่?`)) return;
+
+    await runAction(() => kickPlayer(roomId, playerIdToKick));
   };
 
   // Handle Toggle Ready
   const handleToggleReady = async () => {
     if (!playerId || !currentPlayer) return;
 
-    setActionLoading(true);
-    setActionError(null);
-
-    try {
-      await toggleReady(roomId, playerId, currentPlayer.isReady);
-    } catch (error) {
-      const errorMsg =
-        error instanceof Error ? error.message : "เกิดข้อผิดพลาด";
-      setActionError(errorMsg);
-      console.error("Toggle ready error:", error);
-    } finally {
-      setActionLoading(false);
-    }
+    await runAction(() => toggleReady(roomId, playerId, currentPlayer.isReady));
   };
 
   // Handle Leave Room
   const handleLeaveRoom = async () => {
     if (!playerId) return;
+    if (!confirm("ต้องการออกจากห้องหรือไม่?")) return;
 
-    const confirmed = confirm("ต้องการออกจากห้องหรือไม่?");
-
-    if (!confirmed) {
-      return;
-    }
-
-    setActionLoading(true);
-    setActionError(null);
-
-    try {
-      await leaveRoom(roomId, playerId);
-      router.push("/");
-    } catch (error) {
-      const errorMsg =
-        error instanceof Error ? error.message : "เกิดข้อผิดพลาด";
-      setActionError(errorMsg);
-      console.error("Leave room error:", error);
-      setActionLoading(false);
-    }
+    await runAction(
+      async () => {
+        await leaveRoom(roomId, playerId);
+        router.push("/");
+      },
+      { keepLoading: true }
+    );
   };
 
   // Handle Update Max Players
   const handleUpdateMaxPlayers = async () => {
     if (!isHost || !playerId || !room) return;
 
-    setActionLoading(true);
-    setActionError(null);
-
-    try {
-      const response = await fetch(`/api/rooms/${roomId}/update-settings`, {
-        method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          hostId: playerId,
-          maxPlayers: newMaxPlayers,
-        }),
-      });
-
-      const data = await response.json();
-
-      if (data.success) {
+    await runAction(
+      async () => {
+        const failure = await callRoomApi(
+          "update-settings",
+          "PATCH",
+          { hostId: playerId, maxPlayers: newMaxPlayers },
+          "ไม่สามารถอัพเดทการตั้งค่าได้"
+        );
+        if (failure) return failure;
         setEditingMaxPlayers(false);
-      } else {
-        setActionError(data.error || "ไม่สามารถอัพเดทการตั้งค่าได้");
-      }
-    } catch (error) {
-      console.error("Update settings error:", error);
-      setActionError("เกิดข้อผิดพลาดในการอัพเดทการตั้งค่า");
-    } finally {
-      setActionLoading(false);
-    }
+      },
+      { errorMessage: () => "เกิดข้อผิดพลาดในการอัพเดทการตั้งค่า" }
+    );
   };
 
   // Handle Start Game
+  // On success the redirect happens via useEffect when room status changes
   const handleStartGame = async () => {
     if (!isHost || !room || !canStartGame || !playerId) return;
 
-    setActionLoading(true);
-    setActionError(null);
-
-    try {
-      // Call API to start game
-      const response = await fetch(`/api/rooms/${roomId}/start`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          hostId: playerId,
-        }),
-      });
-
-      const data = await response.json();
-
-      console.log("API Response:", { status: response.status, data });
-
-      if (data.success) {
-        console.log("✅ Game started:", data.gameSessionId);
-        // Redirect will happen automatically via useEffect when room status changes
-      } else {
-        const errorMsg = data.error || "เกิดข้อผิดพลาดในการเริ่มเกม";
-        setActionError(errorMsg);
-        console.error("❌ Start game error:", {
-          status: response.status,
-          data,
-        });
-        setActionLoading(false);
+    await runAction(
+      () =>
+        callRoomApi(
+          "start",
+          "POST",
+          { hostId: playerId },
+          "เกิดข้อผิดพลาดในการเริ่มเกม"
+        ),
+      {
+        keepLoading: true,
+        errorMessage: () =>
+          "ไม่สามารถเชื่อมต่อกับเซิร์ฟเวอร์ได้ กรุณาลองใหม่อีกครั้ง",
       }
-    } catch (error) {
-      console.error("❌ Start game error:", error);
-      setActionError(
-        "ไม่สามารถเชื่อมต่อกับเซิร์ฟเวอร์ได้ กรุณาลองใหม่อีกครั้ง"
-      );
-      setActionLoading(false);
-    }
+    );
   };
 
   // Loading state

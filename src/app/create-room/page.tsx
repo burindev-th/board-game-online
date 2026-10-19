@@ -7,7 +7,7 @@ import GameSelector from "./components/GameSelector";
 import MaxPlayersSelector from "./components/MaxPlayersSelector";
 import TimeLimitInput from "./components/TimeLimitInput";
 import RulesModal from "./components/RulesModal";
-import { Alert, Button, Heading, Text } from "@/components/ui";
+import { Alert, Button } from "@/components/ui";
 
 import RoomEntryLayout from "@/components/rooms/RoomEntryLayout";
 import { FaArrowRight } from "react-icons/fa6";
@@ -186,85 +186,75 @@ export default function CreateRoomPage() {
 
   return (
     <RoomEntryLayout mode="create">
-      <div>
-        {/* Header */}
-        <div className="mb-6">
-          <Heading level="h1" className="mb-2">
-            สร้างห้องเกม
-          </Heading>
-          <Text tone="muted">ตั้งชื่อ เลือกเกม แล้วเตรียมรับเพื่อนเข้าห้อง</Text>
-        </div>
-
-        {/* API Error Message */}
-        {apiError && (
-          <Alert tone="danger" className="mb-6">
-            {apiError}
-          </Alert>
-        )}
-
-        {/* Form */}
-        <form onSubmit={handleSubmit} className="space-y-4 md:space-y-6">
-          {/* Player Name Input */}
-          <PlayerNameInput
-            value={formData.playerName}
-            onChange={handlePlayerNameChange}
-            error={errors.playerName}
-            disabled={isLoading}
-          />
-
-          {/* Game Selection Dropdown */}
-          <GameSelector
-            games={games}
-            selectedGameId={formData.gameId}
-            onChange={handleGameChange}
-            onShowRules={() => setShowRulesModal(true)}
-            error={errors.gameId}
-            loading={gamesLoading}
-            disabled={isLoading}
-            gamesError={gamesError}
-          />
-
-          {/* Max Players Dropdown */}
-          <MaxPlayersSelector
-            value={formData.maxPlayers}
-            onChange={handleMaxPlayersChange}
-            selectedGame={selectedGame}
-            disabled={isLoading}
-          />
-
-          {/* Time Limit Input - Show only if game supports custom time */}
-          <TimeLimitInput
-            value={formData.timeLimit}
-            onChange={handleTimeLimitChange}
-            selectedGame={selectedGame}
-            disabled={isLoading}
-          />
-
-          <Button
-            type="submit"
-            size="lg"
-            fullWidth
-            loading={isLoading}
-            disabled={
-              !!errors.playerName ||
-              !!errors.gameId ||
-              !formData.playerName.trim() ||
-              !formData.gameId ||
-              isLoading
-            }
-          >
-            {isLoading ? "กำลังสร้างห้อง..." : "สร้างห้องเกม"}
-            {!isLoading && <FaArrowRight aria-hidden />}
-          </Button>
-        </form>
-
-        {/* Info Box */}
-        <Alert tone="info" className="mt-6 md:mt-8">
-          <span className="font-semibold">เคล็ดลับ: </span>
-          หลังจากสร้างห้องแล้ว คุณจะได้รับรหัสห้อง 6 หลักเพื่อแชร์ให้เพื่อนๆ
-          เข้าร่วม
+      {/* API Error Message */}
+      {apiError && (
+        <Alert tone="danger" className="mb-6">
+          {apiError}
         </Alert>
-      </div>
+      )}
+
+      {/* Form */}
+      <form onSubmit={handleSubmit} className="space-y-4 md:space-y-6">
+        {/* Player Name Input */}
+        <PlayerNameInput
+          value={formData.playerName}
+          onChange={handlePlayerNameChange}
+          error={errors.playerName}
+          disabled={isLoading}
+        />
+
+        {/* Game Selection Dropdown */}
+        <GameSelector
+          games={games}
+          selectedGameId={formData.gameId}
+          onChange={handleGameChange}
+          onShowRules={() => setShowRulesModal(true)}
+          error={errors.gameId}
+          loading={gamesLoading}
+          disabled={isLoading}
+          gamesError={gamesError}
+        />
+
+        {/* Max Players Dropdown */}
+        <MaxPlayersSelector
+          value={formData.maxPlayers}
+          onChange={handleMaxPlayersChange}
+          selectedGame={selectedGame}
+          disabled={isLoading}
+        />
+
+        {/* Time Limit Input - Show only if game supports custom time */}
+        <TimeLimitInput
+          value={formData.timeLimit}
+          onChange={handleTimeLimitChange}
+          selectedGame={selectedGame}
+          disabled={isLoading}
+        />
+
+        <Button
+          type="submit"
+          size="lg"
+          fullWidth
+          loading={isLoading}
+          disabled={
+            !!errors.playerName ||
+            !!errors.gameId ||
+            !formData.playerName.trim() ||
+            !formData.gameId ||
+            isLoading
+          }
+        >
+          {isLoading ? "กำลังสร้างห้อง..." : "สร้างห้องเกม"}
+          {!isLoading && <FaArrowRight aria-hidden />}
+        </Button>
+      </form>
+
+      {/* Info Box */}
+      <Alert tone="info" className="mt-6 md:mt-8">
+        <span className="font-semibold">เคล็ดลับ: </span>
+        หลังจากสร้างห้องแล้ว คุณจะได้รับรหัสห้อง 6 หลักเพื่อแชร์ให้เพื่อนๆ
+        เข้าร่วม
+      </Alert>
 
       {/* Rules Modal */}
       <RulesModal

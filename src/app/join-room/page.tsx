@@ -1,9 +1,10 @@
 "use client";
 
 import { useState } from "react";
-import { Alert, Button, Heading, Input, Text } from "@/components/ui";
+import { Alert, Button, Input, Text } from "@/components/ui";
 
 import RoomEntryLayout from "@/components/rooms/RoomEntryLayout";
+import { formatRoomCode, ROOM_CODE_LENGTH } from "@/lib/utils/roomCode";
 import { FaArrowRight } from "react-icons/fa6";
 
 // API Response Types
@@ -37,14 +38,14 @@ export default function JoinRoomPage() {
     value = value.replace(/\D/g, "");
 
     // Limit to 6 digits
-    value = value.slice(0, 6);
+    value = value.slice(0, ROOM_CODE_LENGTH);
 
     setFormData({ ...formData, roomCode: value });
 
     // Validation
     if (value.length === 0) {
       setErrors({ ...errors, roomCode: "กรุณากรอกรหัสห้อง" });
-    } else if (value.length < 6) {
+    } else if (value.length < ROOM_CODE_LENGTH) {
       setErrors({ ...errors, roomCode: "รหัสห้องต้องเป็นตัวเลข 6 หลัก" });
     } else {
       setErrors({ ...errors, roomCode: "" });
@@ -72,7 +73,7 @@ export default function JoinRoomPage() {
     setApiError(null);
 
     // Validation
-    if (formData.roomCode.length !== 6) {
+    if (formData.roomCode.length !== ROOM_CODE_LENGTH) {
       setErrors({ ...errors, roomCode: "รหัสห้องต้องเป็นตัวเลข 6 หลัก" });
       return;
     }
@@ -145,92 +146,76 @@ export default function JoinRoomPage() {
     }
   };
 
-  // Format room code as XXX-XXX
-  const formatRoomCode = (code: string) => {
-    if (code.length <= 3) return code;
-    return `${code.slice(0, 3)}-${code.slice(3)}`;
-  };
-
   const isFormValid =
-    formData.roomCode.length === 6 &&
+    formData.roomCode.length === ROOM_CODE_LENGTH &&
     formData.playerName.trim().length > 0 &&
     !errors.roomCode &&
     !errors.playerName;
 
   return (
     <RoomEntryLayout mode="join">
-      <div>
-        {/* Header */}
-        <div className="mb-6">
-          <Heading level="h1" className="mb-2">
-            เข้าร่วมห้อง
-          </Heading>
-          <Text tone="muted">อีกนิดเดียว ก็ได้สนุกกับเพื่อนแล้ว</Text>
-        </div>
+      {/* API Error Message */}
+      {apiError && (
+        <Alert tone="danger" className="mb-6">
+          {apiError}
+        </Alert>
+      )}
 
-        {/* API Error Message */}
-        {apiError && (
-          <Alert tone="danger" className="mb-6">
-            {apiError}
-          </Alert>
-        )}
+      {/* Form */}
+      <form onSubmit={handleSubmit} className="space-y-4 md:space-y-6">
+        {/* Room Code Input */}
+        <Input
+          type="text"
+          id="roomCode"
+          label="รหัสห้อง *"
+          value={formatRoomCode(formData.roomCode)}
+          onChange={handleRoomCodeChange}
+          placeholder="000-000"
+          autoComplete="off"
+          hint="ขอรหัส 6 หลักจากเพื่อนที่สร้างห้อง"
+          inputMode="numeric"
+          disabled={isLoading}
+          error={errors.roomCode || undefined}
+          className="h-auto py-4 text-center font-number text-h2 tracking-[0.3em]"
+        />
 
-        {/* Form */}
-        <form onSubmit={handleSubmit} className="space-y-4 md:space-y-6">
-          {/* Room Code Input */}
+        {/* Player Name Input */}
+        <div>
           <Input
             type="text"
-            id="roomCode"
-            label="รหัสห้อง *"
-            value={formatRoomCode(formData.roomCode)}
-            onChange={handleRoomCodeChange}
-            placeholder="000-000"
-            autoComplete="off"
-            hint="ขอรหัส 6 หลักจากเพื่อนที่สร้างห้อง"
-            inputMode="numeric"
+            id="playerName"
+            label="ชื่อผู้เล่น *"
+            value={formData.playerName}
+            onChange={handlePlayerNameChange}
+            placeholder="ใส่ชื่อของคุณ"
+            maxLength={20}
             disabled={isLoading}
-            error={errors.roomCode || undefined}
-            className="h-auto py-4 text-center font-number text-h2 tracking-[0.3em]"
+            error={errors.playerName || undefined}
           />
+          <Text variant="caption" tone="subtle" className="mt-1.5 text-right">
+            {formData.playerName.length}/20
+          </Text>
+        </div>
 
-          {/* Player Name Input */}
-          <div>
-            <Input
-              type="text"
-              id="playerName"
-              label="ชื่อผู้เล่น *"
-              value={formData.playerName}
-              onChange={handlePlayerNameChange}
-              placeholder="ใส่ชื่อของคุณ"
-              maxLength={20}
-              disabled={isLoading}
-              error={errors.playerName || undefined}
-            />
-            <Text variant="caption" tone="subtle" className="mt-1.5 text-right">
-              {formData.playerName.length}/20
-            </Text>
-          </div>
+        {/* Submit Button */}
+        <Button
+          type="submit"
+          variant="secondary"
+          size="lg"
+          fullWidth
+          loading={isLoading}
+          disabled={!isFormValid || isLoading}
+        >
+          {isLoading ? "กำลังเข้าห้อง..." : "เข้าร่วมห้องเกม"}
+          {!isLoading && <FaArrowRight aria-hidden />}
+        </Button>
+      </form>
 
-          {/* Submit Button */}
-          <Button
-            type="submit"
-            variant="secondary"
-            size="lg"
-            fullWidth
-            loading={isLoading}
-            disabled={!isFormValid || isLoading}
-          >
-            {isLoading ? "กำลังเข้าห้อง..." : "เข้าร่วมห้องเกม"}
-            {!isLoading && <FaArrowRight aria-hidden />}
-          </Button>
-        </form>
-
-        {/* Info Box */}
-        <Alert tone="info" className="mt-6 md:mt-8">
-          <span className="font-semibold">คำแนะนำ:</span>{" "}
-          รหัสห้องเป็นตัวเลข 6 หลักที่ได้รับจากผู้สร้างห้อง
-        </Alert>
-      </div>
+      {/* Info Box */}
+      <Alert tone="info" className="mt-6 md:mt-8">
+        <span className="font-semibold">คำแนะนำ:</span>{" "}
+        รหัสห้องเป็นตัวเลข 6 หลักที่ได้รับจากผู้สร้างห้อง
+      </Alert>
     </RoomEntryLayout>
   );
 }

@@ -23,3 +23,25 @@ export function validateRoomCode(code: string): boolean {
   const regex = /^\d{6}$/;
   return regex.test(code);
 }
+
+/** จำนวนหลักของรหัสห้อง */
+export const ROOM_CODE_LENGTH = 6;
+
+/**
+ * แยกรหัสห้องเป็น 2 ส่วนสำหรับแสดงผลแบบ XXX-XXX
+ * @param code - รหัสห้อง เช่น "123456"
+ * @returns ["123", "456"]
+ */
+export function splitRoomCode(code: string): [string, string] {
+  return [code.slice(0, 3), code.slice(3)];
+}
+
+/**
+ * จัดรูปแบบรหัสห้องเป็น XXX-XXX (รองรับรหัสที่ยังพิมพ์ไม่ครบ)
+ * @param code - รหัสห้อง เช่น "123456" หรือ "12"
+ * @returns "123-456" หรือ "12"
+ */
+export function formatRoomCode(code: string): string {
+  if (code.length <= 3) return code;
+  return splitRoomCode(code).join("-");
+}
