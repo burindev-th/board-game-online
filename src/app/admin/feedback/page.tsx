@@ -15,7 +15,7 @@ export default function AdminFeedbackPage() {
   const router = useRouter();
   // Check authentication + auto-logout after 8 hours of inactivity
   const { user, loading } = useAdminAuth();
-  const { feedbacks, loading: feedbacksLoading } = useFeedback();
+  const { feedbacks, loading: feedbacksLoading } = useFeedback(!!user);
 
   const [filterStatus, setFilterStatus] = useState<FilterStatus>('all');
   const [selectedFeedback, setSelectedFeedback] = useState<Feedback | null>(null);

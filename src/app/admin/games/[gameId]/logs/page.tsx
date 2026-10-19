@@ -43,7 +43,7 @@ export default function ItoGameLogsPage() {
   });
 
   // Data
-  const { logs, loading: logsLoading } = useItoGameLogs();
+  const { logs, loading: logsLoading } = useItoGameLogs(!!user);
   const { questions, loading: questionsLoading } = useItoQuestions();
 
   // Custom hooks

@@ -14,11 +14,16 @@ export interface ItoGameLog {
   createdAt: Timestamp | null;
 }
 
-export function useItoGameLogs() {
+/**
+ * @param enabled ส่ง true เมื่อ admin login แล้ว (ito_game_logs อ่านได้เฉพาะ admin)
+ */
+export function useItoGameLogs(enabled: boolean) {
   const [logs, setLogs] = useState<ItoGameLog[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    if (!enabled) return;
+
     const logsRef = collection(db, 'ito_game_logs');
     const q = query(logsRef, orderBy('createdAt', 'desc'));
 
@@ -33,7 +38,7 @@ export function useItoGameLogs() {
     });
 
     return () => unsubscribe();
-  }, []);
+  }, [enabled]);
 
   return { logs, loading };
 }

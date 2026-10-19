@@ -7,12 +7,17 @@ import { collection, query, orderBy, onSnapshot, QuerySnapshot } from 'firebase/
 import { db } from '@/lib/firebase/config';
 import type { UserAnalytics } from '@/lib/firebase/age';
 
-export function useUserAnalytics() {
+/**
+ * @param enabled ส่ง true เมื่อ admin login แล้ว (user_analytics อ่านได้เฉพาะ admin)
+ */
+export function useUserAnalytics(enabled: boolean) {
   const [analytics, setAnalytics] = useState<(UserAnalytics & { id: string })[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    if (!enabled) return;
+
     const analyticsRef = collection(db, 'user_analytics');
     const q = query(analyticsRef, orderBy('timestamp', 'desc'));
 
@@ -35,7 +40,7 @@ export function useUserAnalytics() {
     );
 
     return () => unsubscribe();
-  }, []);
+  }, [enabled]);
 
   return { analytics, loading, error };
 }

@@ -17,12 +17,17 @@ interface UseFeedbackResult {
   error: string | null;
 }
 
-export function useFeedback(): UseFeedbackResult {
+/**
+ * @param enabled ส่ง true เมื่อ admin login แล้ว (feedback อ่านได้เฉพาะ admin)
+ */
+export function useFeedback(enabled: boolean): UseFeedbackResult {
   const [feedbacks, setFeedbacks] = useState<Feedback[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    if (!enabled) return;
+
     // Reference to feedback collection
     const feedbackRef = collection(db, 'feedback');
 
@@ -68,7 +73,7 @@ export function useFeedback(): UseFeedbackResult {
     return () => {
       unsubscribe();
     };
-  }, []);
+  }, [enabled]);
 
   return { feedbacks, loading, error };
 }

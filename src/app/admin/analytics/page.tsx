@@ -9,7 +9,7 @@ export default function AnalyticsPage() {
   const router = useRouter();
   // Check authentication + auto-logout after 8 hours of inactivity
   const { user, loading } = useAdminAuth();
-  const { analytics, loading: analyticsLoading } = useUserAnalytics();
+  const { analytics, loading: analyticsLoading } = useUserAnalytics(!!user);
 
   // คำนวณสถิติ
   const stats = useMemo(() => {
